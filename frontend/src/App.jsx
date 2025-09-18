@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import RegisterTeacher from "./pages/RegisterTeacher";
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -30,9 +31,10 @@ function App() {
           </MainLayout>
         }
       >
-        <Route path="/home" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+  <Route path="/home" element={<Home />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
+  <Route path="/register-teacher" element={<RegisterTeacher />} />
       </Route>
 
       {/* Estudiante */}

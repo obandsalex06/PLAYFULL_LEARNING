@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
-import { Link } from "react-router-dom";
 
-export default function Register() {
+export default function RegisterTeacher() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "estudiante",
+    school_id: ""
   });
   const [mensaje, setMensaje] = useState("");
   const navigate = useNavigate();
@@ -19,18 +18,17 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("http://localhost:5000/api/auth/register-teacher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
       if (res.ok) {
-        setMensaje("✅ Usuario registrado con éxito");
+        setMensaje("✅ Profesor registrado con éxito");
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        setMensaje("❌ " + JSON.stringify(data));
+        setMensaje("❌ " + (data.error || data.message));
       }
     } catch {
       setMensaje("⚠️ Error de conexión con el servidor");
@@ -39,12 +37,12 @@ export default function Register() {
 
   return (
     <AuthLayout
-      tituloIzq="¡Únete a Playful Learning 🚀!"
+      tituloIzq="¡Únete como Profesor!"
       subtituloIzq="¿Ya tienes cuenta?"
       linkIzq="/login"
       textoLinkIzq="Inicia sesión"
-      tituloDer="Crear cuenta"
-      subtituloDer="Regístrate y empieza tu aventura de aprendizaje ✨"
+      tituloDer="Registro de Profesor"
+      subtituloDer="Registra tu cuenta de docente"
       linkAbajo="/home"
       textoLinkAbajo="Ir al inicio"
     >
@@ -76,21 +74,11 @@ export default function Register() {
           required
           className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-        >
-          <option value="estudiante">Estudiante</option>
-          <option value="docente">Docente</option>
-          <option value="admin">Admin</option>
-        </select>
         <input
           type="number"
           name="school_id"
           placeholder="ID del colegio (opcional)"
-          value={formData.school_id || ""}
+          value={formData.school_id}
           onChange={handleChange}
           className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
         />
@@ -98,18 +86,12 @@ export default function Register() {
           type="submit"
           className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl shadow hover:bg-purple-700 transition"
         >
-          Registrarse
+          Registrarse como Profesor
         </button>
       </form>
       {mensaje && (
         <p className="mt-4 text-center font-semibold text-purple-600">{mensaje}</p>
       )}
-      <div className="mt-6 text-center">
-        <span>¿Eres profesor? </span>
-        <Link to="/register-teacher" className="text-purple-600 font-semibold hover:underline">
-          Regístrate aquí
-        </Link>
-      </div>
     </AuthLayout>
   );
 }
