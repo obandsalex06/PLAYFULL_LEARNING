@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
+import PublicNavbar from "../components/navbar/PublicNavbar";
 
-export default function MainLayout({ children }) {
+export default function PublicLayout() {
   return (
     <div>
-      {children}
-
+      <PublicNavbar />
       <main className="p-6">
         <Outlet />
       </main>

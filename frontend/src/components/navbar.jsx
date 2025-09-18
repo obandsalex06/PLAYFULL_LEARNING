@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom"; // 👈 Importa Link
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,17 +12,12 @@ export default function Navbar() {
 
         {/* Menu */}
         <div className="hidden md:flex gap-6 items-center">
-          <a href="#features" className="text-gray-700 hover:text-purple-600 transition">
+          <Link to="/#features" className="text-gray-700 hover:text-purple-600 transition">
             Funciones
-          </a>
-          <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition">
+          </Link>
+          <Link to="/#testimonials" className="text-gray-700 hover:text-purple-600 transition">
             Testimonios
-          </a>
-          <a href="/admin" className="text-gray-700 hover:text-purple-600 transition">
-            Administrador
-          </a>
-
-          {/* 👇 Aquí reemplazamos el botón por un Link */}
+          </Link>
           <Link
             to="/login"
             className="px-5 py-2 bg-purple-600 text-white rounded-xl shadow hover:bg-purple-700 transition"
@@ -43,17 +38,15 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden px-6 pb-4 flex flex-col gap-4 bg-white shadow-md">
-          <a href="#features" className="text-gray-700 hover:text-purple-600 transition">
+          <Link to="/#features" className="text-gray-700 hover:text-purple-600 transition">
             Funciones
-          </a>
-          <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition">
+          </Link>
+          <Link to="/#testimonials" className="text-gray-700 hover:text-purple-600 transition">
             Testimonios
-          </a>
-          <a href="#contact" className="text-gray-700 hover:text-purple-600 transition">
+          </Link>
+          <Link to="/#contact" className="text-gray-700 hover:text-purple-600 transition">
             Contacto
-          </a>
-
-          {/* También aquí 👇 */}
+          </Link>
           <Link
             to="/login"
             className="px-5 py-2 bg-purple-600 text-white rounded-xl shadow hover:bg-purple-700 transition"
