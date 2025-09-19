@@ -1,7 +1,9 @@
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function TeacherDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (!user || user.role !== "docente") {
     return (
@@ -11,11 +13,27 @@ export default function TeacherDashboard() {
     );
   }
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-8">
-        <h1 className="text-4xl font-extrabold text-gray-800">Panel de Docente</h1>
-        <p className="text-gray-600 mt-2">Bienvenido, {user.name}</p>
+      <header className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-800">Panel de Docente</h1>
+          <p className="text-gray-600 mt-2">Bienvenido, {user.name}</p>
+        </div>
+        <button
+          className="bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+        >
+          Cerrar sesión
+        </button>
       </header>
 
       <div className="bg-white p-6 rounded-xl shadow">

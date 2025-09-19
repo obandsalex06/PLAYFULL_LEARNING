@@ -1,8 +1,10 @@
 // src/pages/StudentDashboard.jsx
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   if (!user || user.role !== "estudiante") {
     return (
@@ -16,11 +18,20 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-8">
+      <header className="mb-8 flex flex-col items-center">
         <h1 className="text-4xl font-extrabold text-gray-800">Panel de Estudiante</h1>
         <p className="text-gray-600 mt-2">
           Bienvenido <span className="font-semibold text-indigo-600">{user.name}</span>.
         </p>
+        <button
+          className="mt-4 bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+        >
+          Cerrar sesión
+        </button>
       </header>
 
       {/* Cards */}

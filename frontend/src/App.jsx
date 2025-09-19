@@ -9,6 +9,7 @@ import AdminPanel from "./pages/AdminPanel";
 import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import RegisterTeacher from "./pages/RegisterTeacher";
+import TeacherClasses from "./pages/TeacherClasses";
 
 // Layouts
 import MainLayout from "./layouts/MainLayout";
@@ -56,7 +57,8 @@ function App() {
           </MainLayout>
         }
       >
-        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+  <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+  <Route path="/teacher/classes" element={<TeacherClasses />} />
       </Route>
 
       {/* Admin con su propio layout */}
