@@ -1,3 +1,12 @@
+-- Tabla de premios (rewards)
+CREATE TABLE IF NOT EXISTS rewards (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  cost INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 -- Script para crear las tablas principales de Playfull Learning en MySQL
 
 CREATE TABLE IF NOT EXISTS schools (
@@ -74,5 +83,17 @@ CREATE TABLE IF NOT EXISTS coins (
   reason VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES students(id)
+);
+
+-- Tabla para secretarias/administrativos escolares
+CREATE TABLE IF NOT EXISTS secretaries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  school_id INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (school_id) REFERENCES schools(id)
 );
 

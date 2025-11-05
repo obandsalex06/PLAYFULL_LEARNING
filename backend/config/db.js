@@ -2,10 +2,10 @@
 import mysql from 'mysql2';
 
 const connection = mysql.createConnection({
-    host: 'localhost', // Cambia esto si tu base de datos está en otro host
-    user: 'root', // Cambia por tu usuario de MySQL
-    password: '', // Cambia por tu contraseña de MySQL
-    database: 'playful_learning' // Cambia por el nombre de tu base de datos
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'playful_learning'
 });
 
 connection.connect((err) => {

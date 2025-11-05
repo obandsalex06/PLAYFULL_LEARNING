@@ -1,7 +1,10 @@
+// Obtener clases y estudiantes del docente
+export const getTeacherClasses = (headers) =>
+    API.get("/auth/teacher-classes", { headers });
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api"
+    baseURL: "http://localhost:5000/api"
 });
 
 // Registro

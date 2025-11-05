@@ -4,6 +4,7 @@ import AlertMessage from "../components/AlertMessage";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "./AuthLayout";
+import Modal from "../components/Modal";
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -11,6 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -64,11 +66,16 @@ export default function Login() {
           else navigate("/home");
         }, 1000);
       } else {
-        setMensaje("error: " + (data.error || data.message));
+          // Evitar mostrar [object Object]
+          const errMsg = data.error && typeof data.error === 'object' ? JSON.stringify(data.error) : data.error || data.message || 'Error';
+          setMensaje("error: " + errMsg);
+          // Abrir modal específico para contraseña equivocada o credenciales
+          setShowModal(true);
         setLoading(false);
       }
     } catch {
-      setMensaje("error: Error de conexión con el servidor");
+        setMensaje("error: Error de conexión con el servidor");
+        setShowModal(true);
       setLoading(false);
     }
   };
@@ -141,6 +148,9 @@ export default function Login() {
           {mensaje.replace('success:', '').replace('error:', '')}
         </AlertMessage>
       )}
+      <Modal open={showModal} title="Error de autenticación" onClose={() => setShowModal(false)}>
+        <p>{mensaje.replace('error:', '')}</p>
+      </Modal>
     </AuthLayout>
   );
 }

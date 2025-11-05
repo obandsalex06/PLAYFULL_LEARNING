@@ -51,7 +51,6 @@ export default function Register() {
   };
 
   // Actualiza el estado del formulario y limpia errores del campo editado
-  // Actualiza el estado del formulario y limpia errores del campo editado
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });

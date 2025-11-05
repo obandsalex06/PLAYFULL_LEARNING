@@ -10,21 +10,24 @@ export default function Home() {
       {/* Contenido principal */}
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-r from-pink-400 to-purple-500 text-white py-20 px-6 text-center">
+        <section className="relative bg-gradient-to-r from-blue-700 to-blue-500 text-white py-20 px-6 text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold">
-            Aprende de manera <span className="text-yellow-300">divertida 🚀</span>
+            Aprende de manera <span className="text-teal-200">divertida 🚀</span>
           </h1>
-          <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto">
+          <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-blue-100/90">
             Descubre Playful Learning: la plataforma donde estudiantes y profesores
             crecen juntos mientras se divierten aprendiendo.
           </p>
           <div className="mt-8 flex justify-center gap-4">
-            <button className="px-8 py-3 bg-yellow-400 text-purple-700 font-bold rounded-xl shadow-lg hover:bg-yellow-300 transition">
+            <Link
+              to="/Register"
+              className="px-8 py-3 bg-white text-blue-700 font-bold rounded-xl shadow-lg hover:scale-105 transition-transform"
+            >
               Comenzar ahora
-            </button>
-            <button className="px-8 py-3 border border-white text-white rounded-xl hover:bg-white hover:text-purple-600 transition">
+            </Link>
+            <a href="#features" className="px-8 py-3 border border-white text-white rounded-xl hover:bg-white hover:text-blue-700 transition">
               Conocer más
-            </button>
+            </a>
           </div>
         </section>
         
