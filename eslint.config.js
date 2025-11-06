@@ -26,4 +26,30 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Backend (Node) files: enable Node globals
+  {
+    files: ['backend/**/*.{js,jsx,mjs,cjs}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+  },
+  // Backend script files: relax unused-vars for quick ops scripts
+  {
+    files: [
+      'backend/*.js',
+      'backend/scripts/**/*.js',
+      'backend/migrations/**/*.js'
+    ],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'no-unused-vars': 'off',
+    },
+  },
 ])

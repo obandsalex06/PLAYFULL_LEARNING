@@ -48,7 +48,7 @@ export default function Login() {
     setLoading(true);
     setMensaje("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -56,13 +56,19 @@ export default function Login() {
 
       const data = await res.json();
       if (res.ok) {
-        login(data.user);
+        // Guardar usuario y tokens JWT
+        login(data.user, {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken
+        });
+        
         setMensaje("success: Login exitoso, redirigiendo...");
         setTimeout(() => {
           setLoading(false);
           if (data.user.role === "estudiante") navigate("/student-dashboard");
           else if (data.user.role === "docente") navigate("/teacher-dashboard");
           else if (data.user.role === "admin") navigate("/admin");
+          else if (data.user.role === "secretaria") navigate("/secretary");
           else navigate("/home");
         }, 1000);
       } else {
@@ -83,9 +89,9 @@ export default function Login() {
   return (
     <AuthLayout
       tituloIzq="¡Bienvenido de nuevo! 🎉"
-      subtituloIzq="¿Aún no tienes cuenta?"
-      linkIzq="/register"
-      textoLinkIzq="Crear cuenta"
+      subtituloIzq="Accede con tu cuenta asignada"
+      linkIzq={null}
+      textoLinkIzq={null}
       tituloDer="Iniciar sesión"
       subtituloDer="Ingresa a tu cuenta de Playful Learning"
       linkAbajo="/home"
@@ -130,7 +136,7 @@ export default function Login() {
         </div>
         <button
           type="submit"
-          className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center"
+          className="mt-4 px-6 py-3 relative bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold rounded-xl shadow hover:opacity-95 transition flex items-center justify-center"
           disabled={loading}
         >
           {loading ? (

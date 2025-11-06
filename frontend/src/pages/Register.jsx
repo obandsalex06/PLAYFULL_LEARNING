@@ -4,6 +4,7 @@ import AlertMessage from "../components/AlertMessage";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "./AuthLayout";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ export default function Register() {
   const emailTimeout = useRef();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login: doLogin } = useAuth();
 
   // Validaciones de nombre, email, contraseña fuerte y confirmación
   const validate = () => {
@@ -62,7 +64,7 @@ export default function Register() {
       if (!value || errors.email) return;
       emailTimeout.current = setTimeout(async () => {
         try {
-          const res = await fetch("http://localhost:5000/api/auth/check-email", {
+          const res = await fetch("/api/auth/check-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: value })
@@ -85,7 +87,7 @@ export default function Register() {
     setLoading(true);
     setMensaje("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -93,11 +95,45 @@ export default function Register() {
 
       const data = await res.json();
       if (res.ok) {
-        setMensaje("success: Usuario registrado con éxito");
-        setTimeout(() => {
+        // Registro exitoso: intentar login automático para redirigir al dashboard
+        try {
+          const loginRes = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: formData.email, password: formData.password }),
+          });
+          const loginData = await loginRes.json();
+          if (loginRes.ok && loginData.user) {
+            // Guardar usuario en contexto y localStorage
+            doLogin(loginData.user);
+            setMensaje("success: Registro e inicio de sesión exitosos");
+            setLoading(false);
+            // Redirigir según rol (estudiante -> student-dashboard)
+            if (loginData.user.role === "estudiante") {
+              navigate("/student-dashboard");
+            } else if (loginData.user.role === "docente") {
+              navigate("/teacher-dashboard");
+            } else if (loginData.user.role === "admin") {
+              navigate("/admin-panel");
+            } else if (loginData.user.role === "secretaria") {
+              navigate("/secretary-dashboard");
+            } else {
+              navigate("/");
+            }
+            return;
+          } else {
+            // Si el login falla, indicar al usuario que inicie sesión manualmente
+            setMensaje("success: Usuario registrado. Inicia sesión para continuar.");
+            setLoading(false);
+            navigate("/login");
+            return;
+          }
+        } catch {
+          setMensaje("success: Usuario registrado. Inicia sesión para continuar.");
           setLoading(false);
           navigate("/login");
-        }, 2000);
+          return;
+        }
       } else {
         setMensaje("error: " + JSON.stringify(data));
         setLoading(false);
@@ -187,7 +223,7 @@ export default function Register() {
         />
         <button
           type="submit"
-          className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl shadow hover:bg-purple-700 transition flex items-center justify-center"
+          className="mt-4 px-6 py-3 relative bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold rounded-xl shadow hover:opacity-95 transition flex items-center justify-center"
           disabled={loading}
         >
           {loading ? (

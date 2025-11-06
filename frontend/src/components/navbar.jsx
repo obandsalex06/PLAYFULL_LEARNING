@@ -19,14 +19,8 @@ export default function Navbar() {
 
         {/* Menu */}
         <div className="hidden md:flex gap-6 items-center">
-          <Link to="/#features" className="text-white hover:text-teal-200 font-medium transition">
-            Funciones
-          </Link>
           <Link to="/#testimonials" className="text-white hover:text-teal-200 font-medium transition">
             Testimonios
-          </Link>
-          <Link to="/#contact" className="text-white hover:text-teal-200 font-medium transition">
-            Contacto
           </Link>
           <Link
             to="/login"
@@ -49,14 +43,8 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden px-6 pb-4 flex flex-col gap-3 bg-gradient-to-b from-blue-600 to-teal-500 shadow-md">
-          <Link to="/#features" className="text-white hover:text-teal-200 font-medium transition">
-            Funciones
-          </Link>
           <Link to="/#testimonials" className="text-white hover:text-teal-200 font-medium transition">
             Testimonios
-          </Link>
-          <Link to="/#contact" className="text-white hover:text-teal-200 font-medium transition">
-            Contacto
           </Link>
           <Link
             to="/login"

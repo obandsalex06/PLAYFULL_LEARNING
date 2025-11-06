@@ -26,7 +26,7 @@ export default function InputField({
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 ${error ? 'border-red-500' : ''}`}
+  className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 ${error ? 'border-red-500' : ''}`}
         aria-invalid={!!error}
         aria-describedby={error ? `${name}-error` : undefined}
         {...props}

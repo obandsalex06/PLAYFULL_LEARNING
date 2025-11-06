@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar";
+import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import { Link } from "react-router-dom";
 
@@ -12,7 +12,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-blue-700 to-blue-500 text-white py-20 px-6 text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold">
-            Aprende de manera <span className="text-teal-200">divertida 🚀</span>
+            Aprende de manera divertida 🚀
           </h1>
           <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto text-blue-100/90">
             Descubre Playful Learning: la plataforma donde estudiantes y profesores
@@ -20,7 +20,7 @@ export default function Home() {
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
-              to="/Register"
+              to="/login"
               className="px-8 py-3 bg-white text-blue-700 font-bold rounded-xl shadow-lg hover:scale-105 transition-transform"
             >
               Comenzar ahora
@@ -35,19 +35,19 @@ export default function Home() {
         {/* Features Section */}
         <section className="mt-16 max-w-6xl mx-auto grid gap-8 md:grid-cols-3 px-6">
           <div className="bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition">
-            <h3 className="text-xl font-semibold text-purple-600">🎓 Clases Interactivas</h3>
+            <h3 className="text-xl font-semibold text-blue-700">🎓 Clases Interactivas</h3>
             <p className="mt-2 text-gray-600">
               Accede a clases dinámicas y participativas que motivan a los estudiantes a aprender.
             </p>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition">
-            <h3 className="text-xl font-semibold text-purple-600">📂 Tareas y Proyectos</h3>
+            <h3 className="text-xl font-semibold text-blue-700">📂 Tareas y Proyectos</h3>
             <p className="mt-2 text-gray-600">
               Sube tus evidencias de manera fácil y organiza tus entregas sin complicaciones.
             </p>
           </div>
           <div className="bg-white p-6 rounded-3xl shadow-lg hover:shadow-2xl transition">
-            <h3 className="text-xl font-semibold text-purple-600">🏆 Braincoins</h3>
+            <h3 className="text-xl font-semibold text-blue-700">🏆 Learncoins</h3>
             <p className="mt-2 text-gray-600">
               Gana recompensas y desbloquea premios mientras completas tus actividades.
             </p>
@@ -55,9 +55,9 @@ export default function Home() {
         </section>
 
         {/* Testimonials Section */}
-        <section className="mt-20 py-16 bg-purple-50">
+  <section className="mt-20 py-16 bg-blue-50">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-purple-700">Lo que dicen nuestros usuarios</h2>
+            <h2 className="text-3xl font-bold text-blue-800">Lo que dicen nuestros usuarios</h2>
             <p className="mt-3 text-gray-600">Historias reales de aprendizaje y diversión.</p>
 
             <div className="mt-10 grid gap-8 md:grid-cols-2">
@@ -65,30 +65,30 @@ export default function Home() {
                 <p className="text-gray-700">
                   "Mis estudiantes están más motivados que nunca. Playful Learning ha revolucionado mis clases."
                 </p>
-                <span className="block mt-4 font-semibold text-purple-600">— Profesora Ana</span>
+                <span className="block mt-4 font-semibold text-blue-700">— Profesora Ana</span>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition">
                 <p className="text-gray-700">
-                  "Pude completar todas mis tareas a tiempo y ganar Braincoins, ¡aprendiendo y divirtiéndome!"
+                  "Pude completar todas mis tareas a tiempo y ganar learncoins, ¡aprendiendo y divirtiéndome!"
                 </p>
-                <span className="block mt-4 font-semibold text-purple-600">— Estudiante Juan</span>
+                <span className="block mt-4 font-semibold text-blue-700">— Estudiante Juan</span>
               </div>
             </div>
           </div>
         </section>
 
         {/* Contact / Call to Action */}
-        <section className="mt-20 bg-purple-600 text-white py-16 text-center rounded-3xl mx-6 md:mx-auto max-w-4xl shadow-xl">
+  <section className="mt-20 relative bg-gradient-to-r from-blue-700 to-blue-500 text-white py-16 text-center rounded-3xl mx-6 md:mx-auto max-w-4xl shadow-xl">
           <h2 className="text-3xl font-bold">Empieza tu viaje educativo hoy</h2>
-          <p className="mt-3 text-lg text-purple-200">
+          <p className="mt-3 text-lg text-blue-200">
             Regístrate gratis y forma parte de nuestra comunidad de aprendizaje.
           </p>
           <br />
           <Link
-            to="/Register"
-            className="mt-6 px-8 py-3 bg-yellow-400 text-purple-700 font-bold rounded-xl shadow hover:bg-yellow-300 transition"
+            to="/login"
+            className="mt-6 px-8 py-3 bg-yellow-400 text-blue-800 font-bold rounded-xl shadow hover:bg-yellow-300 transition"
           >
-            Crear mi cuenta
+            Iniciar sesión
           </Link>
         </section>
       </main>

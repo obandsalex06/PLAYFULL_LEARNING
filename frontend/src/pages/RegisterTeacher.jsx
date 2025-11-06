@@ -18,7 +18,7 @@ export default function RegisterTeacher() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register-teacher", {
+      const res = await fetch("/api/auth/register-teacher", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -54,7 +54,7 @@ export default function RegisterTeacher() {
           value={formData.name}
           onChange={handleChange}
           required
-          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <input
           type="email"
@@ -63,7 +63,7 @@ export default function RegisterTeacher() {
           value={formData.email}
           onChange={handleChange}
           required
-          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <input
           type="password"
@@ -72,7 +72,7 @@ export default function RegisterTeacher() {
           value={formData.password}
           onChange={handleChange}
           required
-          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <input
           type="number"
@@ -80,17 +80,17 @@ export default function RegisterTeacher() {
           placeholder="ID del colegio (opcional)"
           value={formData.school_id}
           onChange={handleChange}
-          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <button
           type="submit"
-          className="mt-4 px-6 py-3 bg-purple-600 text-white font-bold rounded-xl shadow hover:bg-purple-700 transition"
+          className="mt-4 px-6 py-3 relative bg-gradient-to-r from-blue-700 to-blue-500 text-white font-bold rounded-xl shadow hover:opacity-95 transition"
         >
           Registrarse como Profesor
         </button>
       </form>
       {mensaje && (
-        <p className="mt-4 text-center font-semibold text-purple-600">{mensaje}</p>
+  <p className="mt-4 text-center font-semibold text-blue-700">{mensaje}</p>
       )}
     </AuthLayout>
   );

@@ -44,7 +44,7 @@ export default function Dashboard() {
             </div>
 
             <div className="bg-white shadow-md rounded-xl p-6 hover:shadow-xl transition-shadow duration-300">
-              <h2 className="text-xl font-semibold text-gray-700">Braincoins</h2>
+              <h2 className="text-xl font-semibold text-gray-700">Learncoins</h2>
               <p className="mt-2 text-gray-500">Moneda que acumulas por buen rendimiento.</p>
               <span className="mt-4 block text-3xl font-bold text-indigo-600">120</span>
             </div>
@@ -58,7 +58,7 @@ export default function Dashboard() {
                 Entregaste "Tarea de matemáticas" - 20/08/2025
               </li>
               <li className="p-4 hover:bg-gray-50 transition-colors">
-                Recibiste 10 Braincoins por asistencia
+                Recibiste 10 learncoins por asistencia
               </li>
               <li className="p-4 hover:bg-gray-50 transition-colors">
                 Nueva clase: Historia - 25/08/2025

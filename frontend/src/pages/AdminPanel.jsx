@@ -1,454 +1,1010 @@
-
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Users, School, Gift, LogOut, Menu, UserPlus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import RegisterTeacherForm from "./RegisterTeacherForm";
-import RegisterSecretaryForm from "./RegisterSecretaryForm";
-import CreateClassForm from "./CreateClassForm";
-
-
-// Dashboard de últimos registros
-function AdminDashboard() {
-  const [latestUsers, setLatestUsers] = useState([]);
-  const [latestSchools, setLatestSchools] = useState([]);
-  const [latestTeachers, setLatestTeachers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      fetch("/api/auth/latest-users", { headers: { "x-user-role": "admin" } }).then(r => r.json()),
-      fetch("/api/auth/latest-schools", { headers: { "x-user-role": "admin" } }).then(r => r.json()),
-      fetch("/api/auth/latest-teachers", { headers: { "x-user-role": "admin" } }).then(r => r.json()),
-    ]).then(([users, schools, teachers]) => {
-      setLatestUsers(users);
-      setLatestSchools(schools);
-      setLatestTeachers(teachers);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) return <div className="text-center py-10">Cargando dashboard...</div>;
-
-  return (
-    <section className="relative bg-gradient-to-r from-pink-400 to-purple-500 py-16 px-4 min-h-[60vh] flex flex-col items-center justify-center">
-      <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-10 drop-shadow-lg text-center">
-        Dashboard de Administración
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-        {/* Últimos usuarios */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition border-t-4 border-yellow-400">
-          <h4 className="text-2xl font-bold mb-4 text-purple-600 flex items-center gap-2">🎓 Últimos estudiantes</h4>
-          <table className="w-full text-left text-base">
-            <thead>
-              <tr className="text-slate-600 border-b">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Email</th>
-                <th className="py-2">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestUsers.map(u => (
-                <tr key={u.id} className="border-b hover:bg-purple-50">
-                  <td className="py-2 font-semibold">{u.name}</td>
-                  <td className="py-2">{u.email}</td>
-                  <td className="py-2">{u.created_at?.slice(0, 10)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Últimos colegios */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition border-t-4 border-pink-400">
-          <h4 className="text-2xl font-bold mb-4 text-purple-600 flex items-center gap-2">🏫 Últimos colegios</h4>
-          <table className="w-full text-left text-base">
-            <thead>
-              <tr className="text-slate-600 border-b">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Dirección</th>
-                <th className="py-2">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestSchools.map(s => (
-                <tr key={s.id} className="border-b hover:bg-pink-50">
-                  <td className="py-2 font-semibold">{s.name}</td>
-                  <td className="py-2">{s.address || "-"}</td>
-                  <td className="py-2">{s.created_at?.slice(0, 10)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Últimos profesores */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition border-t-4 border-purple-400">
-          <h4 className="text-2xl font-bold mb-4 text-purple-600 flex items-center gap-2">👩‍🏫 Últimos profesores</h4>
-          <table className="w-full text-left text-base">
-            <thead>
-              <tr className="text-slate-600 border-b">
-                <th className="py-2">Nombre</th>
-                <th className="py-2">Email</th>
-                <th className="py-2">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latestTeachers.map(t => (
-                <tr key={t.id} className="border-b hover:bg-purple-50">
-                  <td className="py-2 font-semibold">{t.name}</td>
-                  <td className="py-2">{t.email}</td>
-                  <td className="py-2">{t.created_at?.slice(0, 10)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-// Componente para gestionar premios
-function RewardsAdmin() {
-  const [rewards, setRewards] = useState([]);
-  const [form, setForm] = useState({ name: "", description: "", cost: "" });
-  const [editId, setEditId] = useState(null);
-  const [mensaje, setMensaje] = useState("");
-  // const { user } = useAuth(); (no usado en este componente)
-
-  // Cargar premios
-  useEffect(() => {
-    fetch("/api/auth/rewards", { headers: { "x-user-role": "admin" } })
-      .then(res => res.json())
-      .then(setRewards);
-  }, [mensaje]);
-
-  // Crear o editar premio
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setMensaje("");
-    const method = editId ? "PUT" : "POST";
-    const url = editId ? `/api/auth/rewards/${editId}` : "/api/auth/rewards";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", "x-user-role": "admin" },
-      body: JSON.stringify({ ...form, cost: Number(form.cost) })
-    });
-    const data = await res.json();
-    setMensaje(data.message);
-    setForm({ name: "", description: "", cost: "" });
-    setEditId(null);
-  };
-
-  // Eliminar premio
-  const handleDelete = async id => {
-    if (!window.confirm("¿Eliminar premio?")) return;
-    const res = await fetch(`/api/auth/rewards/${id}`, {
-      method: "DELETE",
-      headers: { "x-user-role": "admin" }
-// ...existing code...
-    });
-    const data = await res.json();
-    setMensaje(data.message);
-  };
-
-  // Cargar datos en formulario para editar
-  const handleEdit = reward => {
-    setForm({ name: reward.name, description: reward.description || "", cost: reward.cost });
-    setEditId(reward.id);
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow p-6 mb-8">
-      <h4 className="text-lg font-semibold text-gray-800 mb-4">Gestionar premios</h4>
-      {mensaje && <div className="mb-2 text-green-600 font-semibold">{mensaje}</div>}
-      <form className="flex gap-4 mb-6 flex-wrap" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Nombre del premio"
-          className="border rounded px-3 py-2"
-          value={form.name}
-          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Descripción (opcional)"
-          className="border rounded px-3 py-2"
-          value={form.description}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-        />
-        <input
-          type="number"
-          placeholder="Costo (braincoins)"
-          className="border rounded px-3 py-2"
-          value={form.cost}
-          min={1}
-          onChange={e => setForm(f => ({ ...f, cost: e.target.value }))}
-          required
-        />
-        <button type="submit" className="bg-indigo-600 text-white rounded px-4 py-2 font-semibold hover:bg-indigo-700 transition">
-          {editId ? "Actualizar" : "Agregar"}
-        </button>
-        {editId && (
-          <button type="button" className="bg-gray-300 text-gray-700 rounded px-4 py-2 font-semibold ml-2" onClick={() => { setEditId(null); setForm({ name: "", description: "", cost: "" }); }}>
-            Cancelar
-          </button>
-        )}
-      </form>
-      <table className="w-full text-left">
-        <thead>
-          <tr className="text-slate-600 border-b">
-            <th className="py-2">Nombre</th>
-            <th className="py-2">Descripción</th>
-            <th className="py-2">Costo</th>
-            <th className="py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rewards.map(reward => (
-            <tr key={reward.id} className="border-b hover:bg-slate-50">
-              <td className="py-3 font-medium">{reward.name}</td>
-              <td className="py-3">{reward.description || "-"}</td>
-              <td className="py-3">{reward.cost}</td>
-              <td className="py-3 flex gap-2">
-                <button className="text-indigo-600 font-semibold hover:underline" onClick={() => handleEdit(reward)}>Editar</button>
-                <button className="text-red-600 font-semibold hover:underline" onClick={() => handleDelete(reward.id)}>Eliminar</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-// Componente para gestionar colegios
-function SchoolsAdmin() {
-  const [schools, setSchools] = useState([]);
-  const [form, setForm] = useState({ name: "", address: "" });
-  const [editId, setEditId] = useState(null);
-  const [mensaje, setMensaje] = useState("");
-  // const { user } = useAuth(); (no usado en este componente)
-
-  // Cargar colegios
-  useEffect(() => {
-    fetch("/api/auth/schools", { headers: { "x-user-role": "admin" } })
-      .then(res => res.json())
-      .then(setSchools);
-  }, [mensaje]);
-
-  // Crear o editar colegio
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setMensaje("");
-    const method = editId ? "PUT" : "POST";
-    const url = editId ? `/api/auth/schools/${editId}` : "/api/auth/schools";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", "x-user-role": "admin" },
-      body: JSON.stringify(form)
-    });
-    const data = await res.json();
-    setMensaje(data.message);
-    setForm({ name: "", address: "" });
-    setEditId(null);
-  };
-
-  // Eliminar colegio
-  const handleDelete = async id => {
-    if (!window.confirm("¿Eliminar colegio?")) return;
-    const res = await fetch(`/api/auth/schools/${id}`, {
-      method: "DELETE",
-      headers: { "x-user-role": "admin" }
-    });
-    const data = await res.json();
-    setMensaje(data.message);
-  };
-
-  // Cargar datos en formulario para editar
-  const handleEdit = school => {
-    setForm({ name: school.name, address: school.address || "" });
-    setEditId(school.id);
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow p-6 mb-8">
-      <h4 className="text-lg font-semibold text-gray-800 mb-4">Gestionar colegios</h4>
-      {mensaje && <div className="mb-2 text-green-600 font-semibold">{mensaje}</div>}
-      <form className="flex gap-4 mb-6 flex-wrap" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Nombre del colegio"
-          className="border rounded px-3 py-2"
-          value={form.name}
-          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Dirección (opcional)"
-          className="border rounded px-3 py-2"
-          value={form.address}
-          onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-        />
-        <button type="submit" className="bg-indigo-600 text-white rounded px-4 py-2 font-semibold hover:bg-indigo-700 transition">
-          {editId ? "Actualizar" : "Agregar"}
-        </button>
-        {editId && (
-          <button type="button" className="bg-gray-300 text-gray-700 rounded px-4 py-2 font-semibold ml-2" onClick={() => { setEditId(null); setForm({ name: "", address: "" }); }}>
-            Cancelar
-          </button>
-        )}
-      </form>
-      <table className="w-full text-left">
-        <thead>
-          <tr className="text-slate-600 border-b">
-            <th className="py-2">Nombre</th>
-            <th className="py-2">Dirección</th>
-            <th className="py-2">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {schools.map(school => (
-            <tr key={school.id} className="border-b hover:bg-slate-50">
-              <td className="py-3 font-medium">{school.name}</td>
-              <td className="py-3">{school.address || "-"}</td>
-              <td className="py-3 flex gap-2">
-                <button className="text-indigo-600 font-semibold hover:underline" onClick={() => handleEdit(school)}>Editar</button>
-                <button className="text-red-600 font-semibold hover:underline" onClick={() => handleDelete(school.id)}>Eliminar</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-const NAV = [
-  { to: "/admin/users", label: "Usuarios", Icon: Users },
-  { to: "/admin/schools", label: "Colegios", Icon: School },
-  { to: "/admin/rewards", label: "Premios", Icon: Gift },
-  { to: "#register-teacher", label: "Registrar profesor", Icon: UserPlus },
-  { to: "#register-secretary", label: "Registrar secretaria", Icon: UserPlus },
-  { to: "create-class", label: "Crear clase", Icon: School },
-];
+import axios from "axios";
+import Pagination from "../components/Pagination";
+import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function AdminPanel() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedSection, setSelectedSection] = useState("dashboard");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados principales
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
 
+  // Estados para datos
+  const [stats, setStats] = useState({ students: 0, teachers: 0, classes: 0, schools: 0, rewards: 0 });
+  const [teachers, setTeachers] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]); // Todos los estudiantes sin paginación
+  const [classes, setClasses] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [rewards, setRewards] = useState([]);
+  
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
+  // Estados para modales de confirmación
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: null,
+    type: "danger"
+  });
+  
+  // Estados para formularios
+  const [teacherForm, setTeacherForm] = useState({
+    name: "", email: "", password: "", school_id: ""
+  });
+  const [secretaryForm, setSecretaryForm] = useState({
+    name: "", email: "", password: "", school_id: ""
+  });
+  const [classForm, setClassForm] = useState({
+    name: "", description: "", teacher_id: "", school_id: ""
+  });
+  const [schoolForm, setSchoolForm] = useState({
+    name: "", address: ""
+  });
+  const [rewardForm, setRewardForm] = useState({
+    name: "", description: "", cost: ""
+  });
+  
+  // Estados para asignación de clases a profesores
+  const [selectedTeacherForClasses, setSelectedTeacherForClasses] = useState("");
+  const [teacherClasses, setTeacherClasses] = useState([]);
+  // Nota: availableClasses eliminado por no usarse
+
+  // Verificar autenticación
   useEffect(() => {
     if (!user || user.role !== "admin") {
       navigate("/login", { replace: true });
     }
   }, [user, navigate]);
 
+  // Cargar estadísticas generales
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      loadStats();
+    }
+  }, [activeTab]);
+
+  // Cargar escuelas al inicio (necesarias para los formularios)
+  useEffect(() => {
+    loadSchools();
+    loadTeachers();
+  }, []);
+
+  // Cargar datos según la pestaña activa
+  useEffect(() => {
+    if (activeTab === "teachers") loadTeachers();
+    if (activeTab === "students") {
+      setCurrentPage(1); // Reset página al cambiar tab
+      loadStudents();
+    }
+    if (activeTab === "classes") loadClasses();
+    if (activeTab === "schools") loadSchools();
+    if (activeTab === "rewards") loadRewards();
+  }, [activeTab, loadStudents]);
+
+  // Recargar estudiantes cuando cambia la página
+  useEffect(() => {
+    if (activeTab === "students") {
+      loadStudents();
+    }
+  }, [currentPage, activeTab, loadStudents]);
+
+  const loadStats = async () => {
+    try {
+      const [studentsRes, teachersRes, classesRes, schoolsRes, rewardsRes] = await Promise.all([
+        axios.get("/api/auth/all-students", { headers: { "x-user-role": "admin" } }),
+        axios.get("/api/auth/teachers", { headers: { "x-user-role": "admin" } }),
+        axios.get("/api/auth/all-classes", { 
+          headers: { "x-user-role": "admin" } 
+        }),
+        fetch("/api/auth/schools", { headers: { "x-user-role": "admin" } }).then(r => r.json()),
+        fetch("/api/auth/rewards", { headers: { "x-user-role": "admin" } }).then(r => r.json())
+      ]);
+      
+      setStats({
+        students: studentsRes.data.length,
+        teachers: teachersRes.data.length,
+        classes: classesRes.data.length,
+        schools: schoolsRes.length,
+        rewards: rewardsRes.length
+      });
+    } catch (err) {
+      console.error("Error cargando estadísticas:", err);
+    }
+  };
+
+  const loadTeachers = async () => {
+    try {
+      const res = await axios.get("/api/auth/teachers", {
+        headers: { "x-user-role": "admin" }
+      });
+      setTeachers(res.data);
+    } catch (err) {
+      console.error("Error cargando profesores:", err);
+    }
+  };
+
+  const loadStudents = useCallback(async () => {
+    try {
+      const res = await axios.get("/api/auth/all-students");
+      setAllStudents(res.data);
+      
+      // Aplicar paginación del lado del cliente
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      setStudents(res.data.slice(startIndex, endIndex));
+    } catch (err) {
+      console.error("Error cargando estudiantes:", err);
+      setStudents([]);
+      setAllStudents([]);
+    }
+  }, [currentPage, itemsPerPage]);
+
+  const loadClasses = async () => {
+    try {
+      const res = await axios.get("/api/auth/all-classes", {
+        headers: { "x-user-role": "admin" }
+      });
+      setClasses(res.data);
+    } catch (err) {
+      console.error("Error cargando clases:", err);
+    }
+  };
+
+  const loadSchools = async () => {
+    try {
+      const res = await fetch("/api/auth/schools", {
+        headers: { "x-user-role": "admin" }
+      });
+      const data = await res.json();
+      setSchools(data);
+    } catch (err) {
+      console.error("Error cargando colegios:", err);
+    }
+  };
+
+  const loadRewards = async () => {
+    try {
+      const res = await fetch("/api/auth/rewards", {
+        headers: { "x-user-role": "admin" }
+      });
+      const data = await res.json();
+      setRewards(data);
+    } catch (err) {
+      console.error("Error cargando premios:", err);
+    }
+  };
+
+  // Handlers para profesor
+  const handleTeacherFormChange = (e) => {
+    setTeacherForm({ ...teacherForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRegisterTeacher = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await axios.post("/api/auth/register-teacher", teacherForm, {
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" }
+      });
+      setMsg({ type: 'success', text: res.data.message || 'Profesor registrado exitosamente' });
+  setTeacherForm({ name: "", email: "", password: "", school_id: "" });
+      loadTeachers();
+    } catch (err) {
+      setMsg({ 
+        type: 'error', 
+        text: err.response?.data?.message || 'Error al registrar profesor' 
+      });
+    }
+    setLoading(false);
+  };
+
+  // Handlers para secretaria
+  const handleSecretaryFormChange = (e) => {
+    setSecretaryForm({ ...secretaryForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRegisterSecretary = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await axios.post("/api/auth/register-secretary", secretaryForm, {
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" }
+      });
+      setMsg({ type: 'success', text: res.data.message || 'Secretaria registrada exitosamente' });
+      setSecretaryForm({ name: "", email: "", password: "", school_id: "" });
+    } catch (err) {
+      setMsg({ 
+        type: 'error', 
+        text: err.response?.data?.message || 'Error al registrar secretaria' 
+      });
+    }
+    setLoading(false);
+  };
+
+  // Handlers para clases
+  const handleClassFormChange = (e) => {
+    setClassForm({ ...classForm, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateClass = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await axios.post("/api/auth/create-class", classForm, {
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" }
+      });
+      setMsg({ type: 'success', text: res.data.message || 'Clase creada exitosamente' });
+      setClassForm({ name: "", description: "", teacher_id: "", school_id: "" });
+      loadClasses();
+    } catch (err) {
+      setMsg({ 
+        type: 'error', 
+        text: err.response?.data?.message || 'Error al crear clase' 
+      });
+    }
+    setLoading(false);
+  };
+
+  // Handlers para colegios
+  const handleSchoolFormChange = (e) => {
+    setSchoolForm({ ...schoolForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSchoolSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/auth/schools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" },
+        body: JSON.stringify(schoolForm)
+      });
+      const data = await res.json();
+      setMsg({ type: 'success', text: data.message });
+      setSchoolForm({ name: "", address: "" });
+      loadSchools();
+    } catch (err) {
+      console.error('Error al crear colegio:', err);
+      setMsg({ type: 'error', text: err?.message || 'Error al crear colegio' });
+    }
+    setLoading(false);
+  };
+
+  const handleDeleteSchool = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Eliminar Colegio",
+      message: "¿Estás seguro de eliminar este colegio? Esta acción no se puede deshacer.",
+      type: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/auth/schools/${id}`, {
+            method: "DELETE",
+            headers: { "x-user-role": "admin" }
+          });
+          const data = await res.json();
+          setMsg({ type: 'success', text: data.message });
+          loadSchools();
+        } catch (err) {
+          console.error('Error al eliminar colegio:', err);
+          setMsg({ type: 'error', text: err?.message || 'Error al eliminar colegio' });
+        } finally {
+          setLoading(false);
+          setConfirmModal({ ...confirmModal, isOpen: false });
+        }
+      }
+    });
+  };
+
+  // Handlers para premios
+  const handleRewardFormChange = (e) => {
+    setRewardForm({ ...rewardForm, [e.target.name]: e.target.value });
+  };
+
+  const handleRewardSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/auth/rewards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" },
+        body: JSON.stringify({ ...rewardForm, cost: Number(rewardForm.cost) })
+      });
+      const data = await res.json();
+      setMsg({ type: 'success', text: data.message });
+      setRewardForm({ name: "", description: "", cost: "" });
+      loadRewards();
+    } catch (err) {
+      console.error('Error al crear premio:', err);
+      setMsg({ type: 'error', text: err?.message || 'Error al crear premio' });
+    }
+    setLoading(false);
+  };
+
+  const handleDeleteReward = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Eliminar Premio",
+      message: "¿Estás seguro de eliminar este premio? Los estudiantes que lo hayan canjeado seguirán teniéndolo.",
+      type: "danger",
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/auth/rewards/${id}`, {
+            method: "DELETE",
+            headers: { "x-user-role": "admin" }
+          });
+          const data = await res.json();
+          setMsg({ type: 'success', text: data.message });
+          loadRewards();
+        } catch (err) {
+          console.error('Error al eliminar premio:', err);
+          setMsg({ type: 'error', text: err?.message || 'Error al eliminar premio' });
+        } finally {
+          setLoading(false);
+          setConfirmModal({ ...confirmModal, isOpen: false });
+        }
+      }
+    });
+  };
+
+  // Función para cargar clases de un profesor
+  const loadTeacherClasses = async (teacherId) => {
+    try {
+      // Filtrar las clases que pertenecen al profesor seleccionado
+      const filtered = classes.filter(c => c.teacher_id === parseInt(teacherId));
+      setTeacherClasses(filtered);
+    } catch (err) {
+      console.error("Error cargando clases del profesor:", err);
+    }
+  };
+
+  // Handler para cambio de profesor en asignación de clases
+  const handleTeacherSelectForClasses = (e) => {
+    const teacherId = e.target.value;
+    setSelectedTeacherForClasses(teacherId);
+    if (teacherId) {
+      loadTeacherClasses(teacherId);
+    } else {
+      setTeacherClasses([]);
+    }
+  };
+
   if (!user || user.role !== "admin") return null;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-800">
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-64"} md:translate-x-0`}
-      >
-        <div className="h-full bg-gradient-to-b from-purple-600 via-indigo-600 to-sky-600 text-white shadow-lg p-6 flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center font-extrabold">
-              PL
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con gradiente azul */}
+      <header className="relative bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight">
-                Playful <span className="font-medium">Admin</span>
-              </h1>
-              <p className="text-xs opacity-80">Panel de control</p>
+              <h1 className="text-3xl font-bold">Panel de Administración</h1>
+              <p className="text-blue-100 mt-1">Bienvenido, {user.name}</p>
             </div>
-          </div>
-
-          <nav className="flex-1 flex flex-col gap-2">
-            {NAV.map(({ to, label, Icon }) => (
-              <button
-                key={to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition w-full text-left ${selectedSection === to ? "bg-white/10" : ""}`}
-                onClick={() => setSelectedSection(to)}
-              >
-                <Icon size={18} />
-                <span className="font-medium">{label}</span>
-              </button>
-            ))}
-          </nav>
-
-          <div className="mt-4">
             <button
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-600/90 transition"
               onClick={() => { logout(); navigate("/login"); }}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
             >
-              <LogOut size={18} />
-              Cerrar sesión
+              <LogOut size={20} />
+              <span>Cerrar sesión</span>
             </button>
           </div>
         </div>
-      </aside>
 
-      {/* Main */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-0 md:ml-64"
-        }`}
-      >
-        <header className="flex items-center justify-between bg-white/80 backdrop-blur px-6 py-4 shadow sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <button
-              className="md:hidden p-2 rounded-md bg-white/60"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu size={20} />
-            </button>
-            <h2 className="text-xl font-semibold">
-              Panel de Administración
-            </h2>
+        {/* Tabs de navegación */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-hide">
+            {[
+              { id: "dashboard", label: "📊 Resumen", icon: "📊" },
+              { id: "teachers", label: "👨‍🏫 Profesores", icon: "👨‍🏫" },
+              { id: "students", label: "👥 Estudiantes", icon: "👥" },
+              { id: "classes", label: "📚 Clases", icon: "📚" },
+              { id: "schools", label: "🏫 Colegios", icon: "🏫" },
+              { id: "rewards", label: "🎁 Premios", icon: "🎁" },
+              { id: "secretary", label: "📋 Secretarias", icon: "📋" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setMsg(null); }}
+                className={`px-6 py-3 rounded-t-lg font-semibold whitespace-nowrap transition ${
+                  activeTab === tab.id
+                    ? "bg-white text-blue-700 shadow-lg"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
+        </div>
+      </header>
 
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-slate-600">{user?.name || "Admin"}</div>
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "Admin")}&background=8a2be2&color=fff`}
-              alt="avatar admin"
-              className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
-            />
+      {/* Contenido principal */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={[
+          { label: 'Panel de Administrador', path: '/admin-panel' }
+        ]} />
+        
+        {/* Tab: Dashboard */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Resumen General</h2>
+            
+            {/* Tarjetas de estadísticas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Estudiantes</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-2">{stats.students}</p>
+                  </div>
+                  <div className="text-4xl">👥</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Profesores</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-2">{stats.teachers}</p>
+                  </div>
+                  <div className="text-4xl">👨‍🏫</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Clases</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-2">{stats.classes}</p>
+                  </div>
+                  <div className="text-4xl">📚</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-orange-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Colegios</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-2">{stats.schools}</p>
+                  </div>
+                  <div className="text-4xl">🏫</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm font-medium">Premios</p>
+                    <p className="text-3xl font-bold text-gray-800 mt-2">{stats.rewards}</p>
+                  </div>
+                  <div className="text-4xl">🎁</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </header>
+        )}
 
-        <main className="p-6 max-w-6xl mx-auto w-full">
-          <h3 className="text-2xl font-bold text-slate-800 mb-6">
-            Bienvenido, <span className="text-purple-600">{user?.name || "Administrador"}</span> 👋
-          </h3>
+        {/* Tab: Profesores */}
+        {activeTab === "teachers" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Gestión de Profesores</h2>
+            
+            {/* Formulario de registro */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Registrar Nuevo Profesor</h3>
+              <form onSubmit={handleRegisterTeacher} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre completo del profesor"
+                  value={teacherForm.name}
+                  onChange={handleTeacherFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  autoFocus
+                  required
+                  disabled={loading}
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="ejemplo@correo.com"
+                  value={teacherForm.email}
+                  onChange={handleTeacherFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                  disabled={loading}
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Contraseña (mínimo 8 caracteres)"
+                  value={teacherForm.password}
+                  onChange={handleTeacherFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                  disabled={loading}
+                />
+                <select
+                  name="school_id"
+                  value={teacherForm.school_id}
+                  onChange={handleTeacherFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  disabled={loading}
+                >
+                  <option value="">Seleccionar colegio (opcional)</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>{school.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {loading ? "Registrando..." : "Registrar Profesor"}
+                </button>
+              </form>
+            </div>
 
-          {/* Sección dinámica */}
-          {selectedSection === "#register-teacher" ? (
-            <div className="bg-white rounded-xl shadow p-6 mb-8 max-w-lg mx-auto">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">
-                Registrar nuevo profesor
-              </h4>
-              <RegisterTeacherForm />
+            {/* Sección de asignación de clases */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Clases Asignadas por Profesor</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Selecciona un profesor para ver sus clases:
+                </label>
+                <select
+                  value={selectedTeacherForClasses}
+                  onChange={handleTeacherSelectForClasses}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">-- Seleccionar profesor --</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>
+                      {teacher.name} ({teacher.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedTeacherForClasses && (
+                <div className="mt-4">
+                  <h4 className="font-medium text-gray-700 mb-3">
+                    Clases asignadas: {teacherClasses.length}
+                  </h4>
+                  {teacherClasses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {teacherClasses.map(cls => (
+                        <div key={cls.id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <h5 className="font-semibold text-blue-800">{cls.name}</h5>
+                          <p className="text-sm text-gray-600 mt-1">{cls.description || "Sin descripción"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic">Este profesor no tiene clases asignadas</p>
+                  )}
+                </div>
+              )}
             </div>
-          ) : selectedSection === "#register-secretary" ? (
-            <div className="bg-white rounded-xl shadow p-6 mb-8 max-w-lg mx-auto">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">Registrar nueva secretaria</h4>
-              <RegisterSecretaryForm />
+
+            {/* Lista de profesores */}
+            <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lista de Profesores</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="pb-3 font-semibold text-gray-700">ID</th>
+                    <th className="pb-3 font-semibold text-gray-700">Nombre</th>
+                    <th className="pb-3 font-semibold text-gray-700">Email</th>
+                    <th className="pb-3 font-semibold text-gray-700">Fecha de Registro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teachers.map(teacher => (
+                    <tr key={teacher.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">{teacher.id}</td>
+                      <td className="py-3 font-medium">{teacher.name}</td>
+                      <td className="py-3">{teacher.email}</td>
+                      <td className="py-3">{new Date(teacher.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : selectedSection === "/admin/schools" ? (
-            <SchoolsAdmin />
-          ) : selectedSection === "/admin/rewards" ? (
-            <RewardsAdmin />
-          ) : selectedSection === "create-class" ? (
-            <CreateClassForm />
-          ) : (
-            <AdminDashboard />
-          )}
-        </main>
-      </div>
+          </div>
+        )}
+
+        {/* Tab: Estudiantes */}
+        {activeTab === "students" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Lista de Estudiantes</h2>
+            
+            <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="pb-3 font-semibold text-gray-700">ID</th>
+                    <th className="pb-3 font-semibold text-gray-700">Nombre</th>
+                    <th className="pb-3 font-semibold text-gray-700">Email</th>
+                    <th className="pb-3 font-semibold text-gray-700">Learncoins</th>
+                    <th className="pb-3 font-semibold text-gray-700">Fecha de Registro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map(student => (
+                    <tr key={student.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">{student.id}</td>
+                      <td className="py-3 font-medium">{student.name}</td>
+                      <td className="py-3">{student.email}</td>
+                      <td className="py-3">
+                        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                          🪙 {student.coins || 0}
+                        </span>
+                      </td>
+                      <td className="py-3">{new Date(student.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {students.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No hay estudiantes registrados
+                </div>
+              )}
+              
+              {/* Paginación */}
+              {allStudents.length > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(allStudents.length / itemsPerPage)}
+                  onPageChange={setCurrentPage}
+                  totalItems={allStudents.length}
+                  itemsPerPage={itemsPerPage}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Clases */}
+        {activeTab === "classes" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Gestión de Clases</h2>
+            
+            {/* Formulario para crear clase */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nueva Clase</h3>
+              <form onSubmit={handleCreateClass} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre de la clase"
+                  value={classForm.name}
+                  onChange={handleClassFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <input
+                  type="text"
+                  name="description"
+                  placeholder="Descripción"
+                  value={classForm.description}
+                  onChange={handleClassFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                <select
+                  name="teacher_id"
+                  value={classForm.teacher_id}
+                  onChange={handleClassFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                >
+                  <option value="">Seleccionar profesor</option>
+                  {teachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                  ))}
+                </select>
+                <select
+                  name="school_id"
+                  value={classForm.school_id}
+                  onChange={handleClassFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">Seleccionar colegio (opcional)</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>{school.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-600 transition disabled:opacity-50"
+                >
+                  {loading ? "Creando..." : "Crear Clase"}
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de clases */}
+            <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lista de Clases</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="pb-3 font-semibold text-gray-700">ID</th>
+                    <th className="pb-3 font-semibold text-gray-700">Nombre</th>
+                    <th className="pb-3 font-semibold text-gray-700">Descripción</th>
+                    <th className="pb-3 font-semibold text-gray-700">Profesor</th>
+                    <th className="pb-3 font-semibold text-gray-700">Fecha de Creación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {classes.map(cls => (
+                    <tr key={cls.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">{cls.id}</td>
+                      <td className="py-3 font-medium">{cls.name}</td>
+                      <td className="py-3">{cls.description || "-"}</td>
+                      <td className="py-3">{cls.teacher_name || "Sin asignar"}</td>
+                      <td className="py-3">{new Date(cls.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Colegios */}
+        {activeTab === "schools" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Gestión de Colegios</h2>
+            
+            {/* Formulario para crear colegio */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Colegio</h3>
+              <form onSubmit={handleSchoolSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre del colegio"
+                  value={schoolForm.name}
+                  onChange={handleSchoolFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="Dirección"
+                  value={schoolForm.address}
+                  onChange={handleSchoolFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-600 transition disabled:opacity-50"
+                >
+                  {loading ? "Creando..." : "Crear Colegio"}
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de colegios */}
+            <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lista de Colegios</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="pb-3 font-semibold text-gray-700">ID</th>
+                    <th className="pb-3 font-semibold text-gray-700">Nombre</th>
+                    <th className="pb-3 font-semibold text-gray-700">Dirección</th>
+                    <th className="pb-3 font-semibold text-gray-700">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schools.map(school => (
+                    <tr key={school.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">{school.id}</td>
+                      <td className="py-3 font-medium">{school.name}</td>
+                      <td className="py-3">{school.address || "-"}</td>
+                      <td className="py-3">
+                        <button
+                          onClick={() => handleDeleteSchool(school.id)}
+                          className="text-red-600 hover:text-red-800 font-semibold"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Premios */}
+        {activeTab === "rewards" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Gestión de Premios</h2>
+            
+            {/* Formulario para crear premio */}
+            <div className="bg-white p-6 rounded-xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Crear Nuevo Premio</h3>
+              <form onSubmit={handleRewardSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre del premio"
+                  value={rewardForm.name}
+                  onChange={handleRewardFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <input
+                  type="text"
+                  name="description"
+                  placeholder="Descripción"
+                  value={rewardForm.description}
+                  onChange={handleRewardFormChange}
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  name="cost"
+                  placeholder="Costo (learncoins)"
+                  value={rewardForm.cost}
+                  onChange={handleRewardFormChange}
+                  min="1"
+                  className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-600 transition disabled:opacity-50"
+                >
+                  {loading ? "Creando..." : "Crear Premio"}
+                </button>
+              </form>
+            </div>
+
+            {/* Lista de premios */}
+            <div className="bg-white p-6 rounded-xl shadow-lg overflow-x-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Lista de Premios</h3>
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="pb-3 font-semibold text-gray-700">ID</th>
+                    <th className="pb-3 font-semibold text-gray-700">Nombre</th>
+                    <th className="pb-3 font-semibold text-gray-700">Descripción</th>
+                    <th className="pb-3 font-semibold text-gray-700">Costo</th>
+                    <th className="pb-3 font-semibold text-gray-700">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rewards.map(reward => (
+                    <tr key={reward.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3">{reward.id}</td>
+                      <td className="py-3 font-medium">{reward.name}</td>
+                      <td className="py-3">{reward.description || "-"}</td>
+                      <td className="py-3">
+                        <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">
+                          🪙 {reward.cost}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <button
+                          onClick={() => handleDeleteReward(reward.id)}
+                          className="text-red-600 hover:text-red-800 font-semibold"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Secretarias */}
+        {activeTab === "secretary" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-800">Registro de Secretarias</h2>
+            
+            <div className="bg-white p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Registrar Nueva Secretaria</h3>
+              <form onSubmit={handleRegisterSecretary} className="space-y-4">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Nombre completo"
+                  value={secretaryForm.name}
+                  onChange={handleSecretaryFormChange}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Correo electrónico"
+                  value={secretaryForm.email}
+                  onChange={handleSecretaryFormChange}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Contraseña"
+                  value={secretaryForm.password}
+                  onChange={handleSecretaryFormChange}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+                <select
+                  name="school_id"
+                  value={secretaryForm.school_id}
+                  onChange={handleSecretaryFormChange}
+                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">Seleccionar colegio (opcional)</option>
+                  {schools.map(school => (
+                    <option key={school.id} value={school.id}>{school.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-800 hover:to-blue-600 transition disabled:opacity-50"
+                >
+                  {loading ? "Registrando..." : "Registrar Secretaria"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Modal de confirmación */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+      />
+
+      {/* Toast de notificaciones */}
+      <Toast message={msg} onClose={() => setMsg(null)} />
     </div>
   );
 }

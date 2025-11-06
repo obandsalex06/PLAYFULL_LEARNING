@@ -15,6 +15,8 @@ export default function Footer() {
             <li><a href="#features" className="hover:text-teal-200 transition">Funciones</a></li>
             <li><a href="#testimonials" className="hover:text-teal-200 transition">Testimonios</a></li>
             <li><a href="#contact" className="hover:text-teal-200 transition">Contacto</a></li>
+            <li><a href="/privacy" className="hover:text-teal-200 transition">Política de Privacidad</a></li>
+            <li><a href="/terms" className="hover:text-teal-200 transition">Términos y Condiciones</a></li>
           </ul>
         </div>
 
