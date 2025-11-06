@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import API from "../api";
 import Pagination from "../components/Pagination";
 import Toast from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
@@ -46,6 +46,83 @@ export default function SecretaryDashboard() {
     }
   }, [user, navigate]);
 
+  // Funciones de carga de datos
+  const loadStats = async () => {
+    try {
+      setLoadingStats(true);
+      const [studentsRes, teachersRes, classesRes, announcementsRes] = await Promise.all([
+        API.get("/auth/all-students", { headers: { "x-user-role": "secretaria" } }),
+        API.get("/auth/teachers", { headers: { "x-user-role": "secretaria" } }),
+        API.get("/auth/all-classes", { headers: { "x-user-role": "secretaria" } }),
+        API.get("/announcements/announcements", { headers: { "x-user-role": "secretaria" } })
+      ]);
+      
+      setStats({
+        students: studentsRes.data.length,
+        teachers: teachersRes.data.length,
+        classes: classesRes.data.length,
+        announcements: announcementsRes.data.length
+      });
+    } catch (err) {
+      console.error("Error cargando estadísticas:", err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const loadStudents = useCallback(async () => {
+    try {
+      setLoadingStudents(true);
+      // Cargar todos los estudiantes (el filtro de grade se puede aplicar en el servidor)
+      const params = {};
+      if (gradeFilter) params.grade = gradeFilter;
+      
+      const res = await API.get("/auth/all-students", { params });
+      setAllStudents(res.data);
+      
+      // Aplicar paginación del lado del cliente
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      setStudents(res.data.slice(startIndex, endIndex));
+    } catch (err) {
+      console.error("Error cargando estudiantes:", err);
+      setStudents([]);
+      setAllStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  }, [gradeFilter, currentPage, itemsPerPage]);
+
+  const loadTeachers = async () => {
+    try {
+      setLoadingTeachersState(true);
+      const res = await API.get("/auth/teachers", {
+        headers: { "x-user-role": "secretaria" }
+      });
+      setTeachers(res.data);
+    } catch (err) {
+      console.error("Error cargando profesores:", err);
+      setTeachers([]);
+    } finally {
+      setLoadingTeachersState(false);
+    }
+  };
+
+  const loadAnnouncements = async () => {
+    try {
+      setLoadingAnnouncements(true);
+      const res = await API.get("/announcements/announcements", {
+        headers: { "x-user-role": "secretaria" }
+      });
+      setAnnouncements(res.data);
+    } catch (err) {
+      console.error("Error cargando comunicados:", err);
+      setAnnouncements([]);
+    } finally {
+      setLoadingAnnouncements(false);
+    }
+  };
+
   // Cargar estadísticas generales
   useEffect(() => {
     if (activeTab === "dashboard") {
@@ -70,82 +147,6 @@ export default function SecretaryDashboard() {
     }
   }, [currentPage, activeTab, loadStudents]);
 
-  const loadStats = async () => {
-    try {
-      setLoadingStats(true);
-      const [studentsRes, teachersRes, classesRes, announcementsRes] = await Promise.all([
-        axios.get("/api/auth/all-students", { headers: { "x-user-role": "secretaria" } }),
-        axios.get("/api/auth/teachers", { headers: { "x-user-role": "secretaria" } }),
-        axios.get("/api/auth/all-classes", { headers: { "x-user-role": "secretaria" } }),
-        axios.get("/api/announcements/announcements", { headers: { "x-user-role": "secretaria" } })
-      ]);
-      
-      setStats({
-        students: studentsRes.data.length,
-        teachers: teachersRes.data.length,
-        classes: classesRes.data.length,
-        announcements: announcementsRes.data.length
-      });
-    } catch (err) {
-      console.error("Error cargando estadísticas:", err);
-    } finally {
-      setLoadingStats(false);
-    }
-  };
-
-  const loadStudents = useCallback(async () => {
-    try {
-      setLoadingStudents(true);
-      // Cargar todos los estudiantes (el filtro de grade se puede aplicar en el servidor)
-      const params = {};
-      if (gradeFilter) params.grade = gradeFilter;
-      
-      const res = await axios.get("/api/auth/all-students", { params });
-      setAllStudents(res.data);
-      
-      // Aplicar paginación del lado del cliente
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      setStudents(res.data.slice(startIndex, endIndex));
-    } catch (err) {
-      console.error("Error cargando estudiantes:", err);
-      setStudents([]);
-      setAllStudents([]);
-    } finally {
-      setLoadingStudents(false);
-    }
-  }, [gradeFilter, currentPage, itemsPerPage]);
-
-  const loadTeachers = async () => {
-    try {
-      setLoadingTeachersState(true);
-      const res = await axios.get("/api/auth/teachers", {
-        headers: { "x-user-role": "secretaria" }
-      });
-      setTeachers(res.data);
-    } catch (err) {
-      console.error("Error cargando profesores:", err);
-      setTeachers([]);
-    } finally {
-      setLoadingTeachersState(false);
-    }
-  };
-
-  const loadAnnouncements = async () => {
-    try {
-      setLoadingAnnouncements(true);
-      const res = await axios.get("/api/announcements/announcements", {
-        headers: { "x-user-role": "secretaria" }
-      });
-      setAnnouncements(res.data);
-    } catch (err) {
-      console.error("Error cargando comunicados:", err);
-      setAnnouncements([]);
-    } finally {
-      setLoadingAnnouncements(false);
-    }
-  };
-
   // Handlers para comunicados
   const handleAnnouncementFormChange = (e) => {
     setAnnouncementForm({ ...announcementForm, [e.target.name]: e.target.value });
@@ -162,8 +163,8 @@ export default function SecretaryDashboard() {
     setMsg(null);
     
     try {
-      const res = await axios.post(
-        "/api/announcements/announcements",
+      const res = await API.post(
+        "/announcements/announcements",
         announcementForm,
         {
           headers: { 
@@ -188,8 +189,8 @@ export default function SecretaryDashboard() {
     if (!window.confirm("¿Estás seguro de eliminar este comunicado?")) return;
     
     try {
-      await axios.delete(
-        `/api/announcements/announcements/${id}`,
+      await API.delete(
+        `/announcements/announcements/${id}`,
         {
           headers: { 
             "x-user-role": "secretaria",
@@ -660,7 +661,7 @@ function StudentRegisterForm({ onCreated, userEmail }) {
     // Si falla (403 u otro), dejamos el selector vacío y el backend inferirá el colegio de la secretaria.
     const loadSchools = async () => {
       try {
-        const res = await axios.get("/api/auth/schools", {
+        const res = await API.get("/auth/schools", {
           headers: { "x-user-role": "admin" }
         });
         setSchools(res.data || []);
@@ -746,8 +747,8 @@ function StudentRegisterForm({ onCreated, userEmail }) {
     setLoading(true);
     setMsg(null);
     try {
-      await axios.post(
-        "/api/auth/register",
+      await API.post(
+        "/auth/register",
         form,
         {
           headers: {

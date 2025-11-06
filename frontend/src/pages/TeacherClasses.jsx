@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import API from "../api";
 
 export default function TeacherClasses() {
   const { user } = useAuth();
@@ -17,13 +17,12 @@ export default function TeacherClasses() {
   useEffect(() => {
     if (!user) return;
     // Obtener clases según rol (admin/docente/secretaria)
-  fetch("/api/auth/classes", {
+    API.get("/auth/classes", {
       headers: { "Content-Type": "application/json", "x-user-role": user.role, "x-user-email": user.email }
     })
-      .then(res => res.json())
-      .then(data => {
-        setClasses(data || []);
-        if (data && data[0]) setSelectedClass(data[0].id);
+      .then(res => {
+        setClasses(res.data || []);
+        if (res.data && res.data[0]) setSelectedClass(res.data[0].id);
       })
       .catch(err => console.error('Error fetching classes', err));
   }, [user]);
@@ -31,11 +30,10 @@ export default function TeacherClasses() {
   // Cargar estudiantes cuando cambia la clase seleccionada
   useEffect(() => {
     if (!selectedClass) return;
-  fetch(`/api/auth/classes/${selectedClass}/students`, {
+    API.get(`/auth/classes/${selectedClass}/students`, {
       headers: { "Content-Type": "application/json", "x-user-role": user.role, "x-user-email": user.email }
     })
-      .then(res => res.json())
-      .then(data => setStudents(Array.isArray(data) ? data : []))
+      .then(res => setStudents(Array.isArray(res.data) ? res.data : []))
       .catch(err => {
         console.error('Error fetching class students', err);
         setStudents([]);
@@ -69,7 +67,7 @@ export default function TeacherClasses() {
       return setRowMessage(sid, 'error', 'Completa clase, nota, tipo y fecha.');
     }
     try {
-  await axios.post('/api/academic/records', {
+      await API.post('/academic/records', {
         student_id: sid,
         class_id: selectedClass,
         grade: input.grade,
@@ -97,7 +95,7 @@ export default function TeacherClasses() {
       return setRowMessage(sid, 'error', 'Completa clase y mensaje.');
     }
     try {
-  await axios.post('/api/feedback', {
+      await API.post('/feedback', {
         student_id: sid,
         class_id: selectedClass,
         feedback_text: input.text,

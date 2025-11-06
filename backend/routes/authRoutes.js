@@ -6,10 +6,11 @@ import { generateTokens, verifyRefreshToken } from "../utils/jwtUtils.js";
 import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-// Rate limiter para login (máximo 5 intentos cada 15 minutos)
+// Rate limiter para login (máximo 20 intentos cada 15 minutos en desarrollo, 5 en producción)
+const isDevelopment = process.env.NODE_ENV !== 'production';
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // Máximo 5 intentos
+    max: isDevelopment ? 20 : 5, // 20 intentos en desarrollo, 5 en producción
     message: "Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.",
     standardHeaders: true, // Retorna info en headers `RateLimit-*`
     legacyHeaders: false, // Deshabilita headers `X-RateLimit-*`

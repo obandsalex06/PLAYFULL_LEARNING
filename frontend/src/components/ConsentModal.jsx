@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
+import API from '../api';
 
 /**
  * Modal para registrar consentimiento de términos y políticas
@@ -22,7 +22,7 @@ export default function ConsentModal({ isOpen, onClose, userEmail, userRole }) {
     setError(null);
 
     try {
-      await axios.post('/api/auth/consent', {
+      await API.post('/auth/consent', {
         user_email: userEmail,
         user_role: userRole,
         consent_type: 'both'

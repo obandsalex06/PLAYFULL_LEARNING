@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import API from "../api";
 import Pagination from "../components/Pagination";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
@@ -68,6 +68,91 @@ export default function AdminPanel() {
     }
   }, [user, navigate]);
 
+  // Funciones de carga de datos
+  const loadStats = async () => {
+    try {
+      const [studentsRes, teachersRes, classesRes, schoolsRes, rewardsRes] = await Promise.all([
+        API.get("/auth/all-students", { headers: { "x-user-role": "admin" } }),
+        API.get("/auth/teachers", { headers: { "x-user-role": "admin" } }),
+        API.get("/auth/all-classes", { 
+          headers: { "x-user-role": "admin" } 
+        }),
+        API.get("/auth/schools", { headers: { "x-user-role": "admin" } }),
+        API.get("/auth/rewards", { headers: { "x-user-role": "admin" } })
+      ]);
+      
+      setStats({
+        students: studentsRes.data.length,
+        teachers: teachersRes.data.length,
+        classes: classesRes.data.length,
+        schools: schoolsRes.data.length,
+        rewards: rewardsRes.data.length
+      });
+    } catch (err) {
+      console.error("Error cargando estadísticas:", err);
+    }
+  };
+
+  const loadTeachers = async () => {
+    try {
+      const res = await API.get("/auth/teachers", {
+        headers: { "x-user-role": "admin" }
+      });
+      setTeachers(res.data);
+    } catch (err) {
+      console.error("Error cargando profesores:", err);
+    }
+  };
+
+  const loadStudents = useCallback(async () => {
+    try {
+      const res = await API.get("/auth/all-students");
+      setAllStudents(res.data);
+      
+      // Aplicar paginación del lado del cliente
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      setStudents(res.data.slice(startIndex, endIndex));
+    } catch (err) {
+      console.error("Error cargando estudiantes:", err);
+      setStudents([]);
+      setAllStudents([]);
+    }
+  }, [currentPage, itemsPerPage]);
+
+  const loadClasses = async () => {
+    try {
+      const res = await API.get("/auth/all-classes", {
+        headers: { "x-user-role": "admin" }
+      });
+      setClasses(res.data);
+    } catch (err) {
+      console.error("Error cargando clases:", err);
+    }
+  };
+
+  const loadSchools = async () => {
+    try {
+      const res = await API.get("/auth/schools", {
+        headers: { "x-user-role": "admin" }
+      });
+      setSchools(res.data);
+    } catch (err) {
+      console.error("Error cargando colegios:", err);
+    }
+  };
+
+  const loadRewards = async () => {
+    try {
+      const res = await API.get("/auth/rewards", {
+        headers: { "x-user-role": "admin" }
+      });
+      setRewards(res.data);
+    } catch (err) {
+      console.error("Error cargando premios:", err);
+    }
+  };
+
   // Cargar estadísticas generales
   useEffect(() => {
     if (activeTab === "dashboard") {
@@ -100,92 +185,6 @@ export default function AdminPanel() {
     }
   }, [currentPage, activeTab, loadStudents]);
 
-  const loadStats = async () => {
-    try {
-      const [studentsRes, teachersRes, classesRes, schoolsRes, rewardsRes] = await Promise.all([
-        axios.get("/api/auth/all-students", { headers: { "x-user-role": "admin" } }),
-        axios.get("/api/auth/teachers", { headers: { "x-user-role": "admin" } }),
-        axios.get("/api/auth/all-classes", { 
-          headers: { "x-user-role": "admin" } 
-        }),
-        fetch("/api/auth/schools", { headers: { "x-user-role": "admin" } }).then(r => r.json()),
-        fetch("/api/auth/rewards", { headers: { "x-user-role": "admin" } }).then(r => r.json())
-      ]);
-      
-      setStats({
-        students: studentsRes.data.length,
-        teachers: teachersRes.data.length,
-        classes: classesRes.data.length,
-        schools: schoolsRes.length,
-        rewards: rewardsRes.length
-      });
-    } catch (err) {
-      console.error("Error cargando estadísticas:", err);
-    }
-  };
-
-  const loadTeachers = async () => {
-    try {
-      const res = await axios.get("/api/auth/teachers", {
-        headers: { "x-user-role": "admin" }
-      });
-      setTeachers(res.data);
-    } catch (err) {
-      console.error("Error cargando profesores:", err);
-    }
-  };
-
-  const loadStudents = useCallback(async () => {
-    try {
-      const res = await axios.get("/api/auth/all-students");
-      setAllStudents(res.data);
-      
-      // Aplicar paginación del lado del cliente
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      setStudents(res.data.slice(startIndex, endIndex));
-    } catch (err) {
-      console.error("Error cargando estudiantes:", err);
-      setStudents([]);
-      setAllStudents([]);
-    }
-  }, [currentPage, itemsPerPage]);
-
-  const loadClasses = async () => {
-    try {
-      const res = await axios.get("/api/auth/all-classes", {
-        headers: { "x-user-role": "admin" }
-      });
-      setClasses(res.data);
-    } catch (err) {
-      console.error("Error cargando clases:", err);
-    }
-  };
-
-  const loadSchools = async () => {
-    try {
-      const res = await fetch("/api/auth/schools", {
-        headers: { "x-user-role": "admin" }
-      });
-      const data = await res.json();
-      setSchools(data);
-    } catch (err) {
-      console.error("Error cargando colegios:", err);
-    }
-  };
-
-  const loadRewards = async () => {
-    try {
-      const res = await fetch("/api/auth/rewards", {
-        headers: { "x-user-role": "admin" }
-      });
-      const data = await res.json();
-      setRewards(data);
-    } catch (err) {
-      console.error("Error cargando premios:", err);
-    }
-  };
-
   // Handlers para profesor
   const handleTeacherFormChange = (e) => {
     setTeacherForm({ ...teacherForm, [e.target.name]: e.target.value });
@@ -196,7 +195,7 @@ export default function AdminPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await axios.post("/api/auth/register-teacher", teacherForm, {
+      const res = await API.post("/auth/register-teacher", teacherForm, {
         headers: { "Content-Type": "application/json", "x-user-role": "admin" }
       });
       setMsg({ type: 'success', text: res.data.message || 'Profesor registrado exitosamente' });
@@ -221,7 +220,7 @@ export default function AdminPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await axios.post("/api/auth/register-secretary", secretaryForm, {
+      const res = await API.post("/auth/register-secretary", secretaryForm, {
         headers: { "Content-Type": "application/json", "x-user-role": "admin" }
       });
       setMsg({ type: 'success', text: res.data.message || 'Secretaria registrada exitosamente' });
@@ -245,7 +244,7 @@ export default function AdminPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await axios.post("/api/auth/create-class", classForm, {
+      const res = await API.post("/auth/create-class", classForm, {
         headers: { "Content-Type": "application/json", "x-user-role": "admin" }
       });
       setMsg({ type: 'success', text: res.data.message || 'Clase creada exitosamente' });
@@ -270,18 +269,15 @@ export default function AdminPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/auth/schools", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-role": "admin" },
-        body: JSON.stringify(schoolForm)
+      const res = await API.post("/auth/schools", schoolForm, {
+        headers: { "Content-Type": "application/json", "x-user-role": "admin" }
       });
-      const data = await res.json();
-      setMsg({ type: 'success', text: data.message });
+      setMsg({ type: 'success', text: res.data.message });
       setSchoolForm({ name: "", address: "" });
       loadSchools();
     } catch (err) {
       console.error('Error al crear colegio:', err);
-      setMsg({ type: 'error', text: err?.message || 'Error al crear colegio' });
+      setMsg({ type: 'error', text: err.response?.data?.message || 'Error al crear colegio' });
     }
     setLoading(false);
   };
@@ -295,16 +291,14 @@ export default function AdminPanel() {
       onConfirm: async () => {
         setLoading(true);
         try {
-          const res = await fetch(`/api/auth/schools/${id}`, {
-            method: "DELETE",
+          const res = await API.delete(`/auth/schools/${id}`, {
             headers: { "x-user-role": "admin" }
           });
-          const data = await res.json();
-          setMsg({ type: 'success', text: data.message });
+          setMsg({ type: 'success', text: res.data.message });
           loadSchools();
         } catch (err) {
           console.error('Error al eliminar colegio:', err);
-          setMsg({ type: 'error', text: err?.message || 'Error al eliminar colegio' });
+          setMsg({ type: 'error', text: err.response?.data?.message || 'Error al eliminar colegio' });
         } finally {
           setLoading(false);
           setConfirmModal({ ...confirmModal, isOpen: false });
@@ -323,18 +317,16 @@ export default function AdminPanel() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/auth/rewards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-user-role": "admin" },
-        body: JSON.stringify({ ...rewardForm, cost: Number(rewardForm.cost) })
-      });
-      const data = await res.json();
-      setMsg({ type: 'success', text: data.message });
+      const res = await API.post("/auth/rewards", 
+        { ...rewardForm, cost: Number(rewardForm.cost) },
+        { headers: { "Content-Type": "application/json", "x-user-role": "admin" } }
+      );
+      setMsg({ type: 'success', text: res.data.message });
       setRewardForm({ name: "", description: "", cost: "" });
       loadRewards();
     } catch (err) {
       console.error('Error al crear premio:', err);
-      setMsg({ type: 'error', text: err?.message || 'Error al crear premio' });
+      setMsg({ type: 'error', text: err.response?.data?.message || 'Error al crear premio' });
     }
     setLoading(false);
   };
@@ -348,16 +340,14 @@ export default function AdminPanel() {
       onConfirm: async () => {
         setLoading(true);
         try {
-          const res = await fetch(`/api/auth/rewards/${id}`, {
-            method: "DELETE",
+          const res = await API.delete(`/auth/rewards/${id}`, {
             headers: { "x-user-role": "admin" }
           });
-          const data = await res.json();
-          setMsg({ type: 'success', text: data.message });
+          setMsg({ type: 'success', text: res.data.message });
           loadRewards();
         } catch (err) {
           console.error('Error al eliminar premio:', err);
-          setMsg({ type: 'error', text: err?.message || 'Error al eliminar premio' });
+          setMsg({ type: 'error', text: err.response?.data?.message || 'Error al eliminar premio' });
         } finally {
           setLoading(false);
           setConfirmModal({ ...confirmModal, isOpen: false });

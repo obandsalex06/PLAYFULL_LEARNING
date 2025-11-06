@@ -1,7 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../api";
 import { getTeacherClasses } from "../api";
 
 export default function TeacherDashboard() {
@@ -61,7 +61,7 @@ export default function TeacherDashboard() {
     if (!user || user.role !== "docente") return;
     async function fetchAllStudents() {
       try {
-        const res = await axios.get("/api/auth/all-students", {
+        const res = await API.get("/auth/all-students", {
           headers: {
             "x-user-role": user.role,
             "x-user-email": user.email,
@@ -96,8 +96,8 @@ export default function TeacherDashboard() {
     setMsg(null);
 
     try {
-      const res = await axios.post(
-        "/api/auth/assign-student",
+      const res = await API.post(
+        "/auth/assign-student",
         assignForm,
         {
           headers: {
@@ -135,8 +135,8 @@ export default function TeacherDashboard() {
     setMsg(null);
 
     try {
-      const res = await axios.post(
-        "/api/auth/assign-coins",
+      const res = await API.post(
+        "/auth/assign-coins",
         coinsForm,
         {
           headers: {
@@ -166,7 +166,7 @@ export default function TeacherDashboard() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await axios.post("/api/feedback", feedbackForm, {
+      const res = await API.post("/feedback", feedbackForm, {
         headers: {
           "Content-Type": "application/json",
           "x-user-role": user.role,
@@ -194,7 +194,7 @@ export default function TeacherDashboard() {
     setLoading(true);
     setMsg(null);
     try {
-      const res = await axios.post("/api/academic/records", academicForm, {
+      const res = await API.post("/academic/records", academicForm, {
         headers: {
           "Content-Type": "application/json",
           "x-user-role": user.role,
@@ -222,7 +222,7 @@ export default function TeacherDashboard() {
 
   const loadClassRecords = async (classId) => {
     try {
-      const res = await axios.get(`/api/academic/records/class/${classId}`, {
+      const res = await API.get(`/academic/records/class/${classId}`, {
         headers: {
           "x-user-role": user.role,
           "x-user-email": user.email,
