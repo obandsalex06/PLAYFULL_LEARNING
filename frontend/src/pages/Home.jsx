@@ -1,6 +1,7 @@
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import { Link } from "react-router-dom";
+import logo from "../assets/logo.png.png";
 
 export default function Home() {
   return (
@@ -11,6 +12,9 @@ export default function Home() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-r from-blue-700 to-blue-500 text-white py-20 px-6 text-center">
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Playful Learning Logo" className="w-32 h-32 object-contain animate-bounce" />
+          </div>
           <h1 className="text-4xl md:text-6xl font-extrabold">
             Aprende de manera divertida 🚀
           </h1>

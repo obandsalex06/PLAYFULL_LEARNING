@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import InputField from "../components/InputField";
 import AlertMessage from "../components/AlertMessage";
 import { useNavigate } from "react-router-dom";
-import AuthLayout from "./AuthLayout";
+import AuthLayout from "../layouts/AuthLayout";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 

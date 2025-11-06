@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "../assets/logo.png.png";
 
 export default function AuthLayout({
   tituloIzq,
@@ -17,6 +18,7 @@ export default function AuthLayout({
 
         {/* IZQUIERDA */}
         <div className="relative bg-gradient-to-r from-blue-700 to-blue-500 text-white flex flex-col items-center justify-center p-10">
+          <img src={logo} alt="Playful Learning Logo" className="w-24 h-24 object-contain mb-4" />
           <h2 className="text-3xl font-bold">{tituloIzq}</h2>
           <p className="mt-3">{subtituloIzq}</p>
           <Link

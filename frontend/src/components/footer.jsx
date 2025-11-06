@@ -1,10 +1,15 @@
+import logo from "../assets/logo.png.png";
+
 export default function Footer() {
   return (
     <footer className="mt-20 bg-gradient-to-r from-blue-700 to-blue-600 text-white">
       <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-8">
         {/* Branding */}
         <div>
-          <h3 className="font-extrabold text-xl mb-2">Playful Learning</h3>
+          <div className="flex items-center gap-3 mb-3">
+            <img src={logo} alt="Playful Learning Logo" className="w-12 h-12 object-contain" />
+            <h3 className="font-extrabold text-xl">Playful Learning</h3>
+          </div>
           <p className="text-sm text-blue-100/80">Aprende jugando — Conecta estudiantes, docentes y recompensas.</p>
         </div>
 

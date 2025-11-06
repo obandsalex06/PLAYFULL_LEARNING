@@ -88,28 +88,16 @@ router.get("/teacher-classes", async (req, res) => {
         const classIds = classRows.map(c => c.id);
         const placeholders = classIds.map(() => '?').join(',');
 
-        // Intentar con students_classes; si falla, usar class_students (compatibilidad)
-        const runStudentsQuery = (tableName) => new Promise((resolve, reject) => {
+        // Consultar directamente en class_students (tabla única oficial)
+        let studentRows = await new Promise((resolve, reject) => {
             db.query(
                 `SELECT s.id, s.name, s.email, cs.class_id FROM students s
-                 JOIN ${tableName} cs ON s.id = cs.student_id
+                 JOIN class_students cs ON s.id = cs.student_id
                  WHERE cs.class_id IN (${placeholders})`,
                 classIds,
                 (err, rows) => err ? reject(err) : resolve(rows)
             );
         });
-
-        let studentRows = [];
-        try {
-            studentRows = await runStudentsQuery('students_classes');
-        } catch {
-            try {
-                studentRows = await runStudentsQuery('class_students');
-            } catch {
-                // Si ambas fallan, devolver clases sin estudiantes
-                studentRows = [];
-            }
-        }
 
         const result = classRows.map(cls => ({
             id: cls.id,
@@ -221,26 +209,20 @@ router.post('/assign-student', async (req, res) => {
         });
         if (!classRow) return res.status(404).json({ message: 'Clase no encontrada' });
 
-        // Crear tabla students_classes si no existe (ddl seguro)
-        const ddl = `CREATE TABLE IF NOT EXISTS students_classes (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          student_id INT NOT NULL,
-          class_id INT NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-          FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
-        )`;
-        await new Promise((resolve, reject) => db.query(ddl, (err) => err ? reject(err) : resolve()));
+                // Usamos tabla única class_students (ya creada via schema.sql)
 
         // Verificar si ya está asignado
         const existing = await new Promise((resolve, reject) => {
-            db.query('SELECT * FROM students_classes WHERE student_id = ? AND class_id = ?', [finalStudentId, class_id], (err, rows) => err ? reject(err) : resolve(rows));
+            db.query('SELECT id FROM class_students WHERE student_id = ? AND class_id = ?', [finalStudentId, class_id], (err, rows) => err ? reject(err) : resolve(rows));
         });
         if (existing.length > 0) return res.status(200).json({ message: 'Estudiante ya asignado a la clase' });
 
         // Insertar asignación
         await new Promise((resolve, reject) => {
-            db.query('INSERT INTO students_classes (student_id, class_id) VALUES (?, ?)', [finalStudentId, class_id], (err) => err ? reject(err) : resolve());
+            db.query('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [class_id, finalStudentId], (err) => {
+                if (err && err.code === 'ER_DUP_ENTRY') return resolve(); // idempotente
+                return err ? reject(err) : resolve();
+            });
         });
 
         res.json({ message: 'Estudiante asignado a la clase correctamente' });
@@ -791,55 +773,8 @@ router.get("/all-students", authenticateToken, authorizeRoles('docente', 'admin'
 });
 
 // Endpoint: asignar estudiante a clase (para docentes)
-router.post("/assign-student", (req, res) => {
-    const role = req.headers["x-user-role"];
-    const teacherEmail = req.headers["x-user-email"];
-    
-    if (role !== "docente") {
-        return res.status(403).json({ message: "Solo los docentes pueden asignar estudiantes" });
-    }
-
-    const { student_id, class_id } = req.body;
-
-    if (!student_id || !class_id) {
-        return res.status(400).json({ message: "Faltan datos: student_id y class_id" });
-    }
-
-    // Verificar que la clase pertenece al docente
-    db.query(
-        `SELECT c.id FROM classes c 
-         JOIN teachers t ON c.teacher_id = t.id 
-         WHERE c.id = ? AND t.email = ?`,
-        [class_id, teacherEmail],
-        (err, classRows) => {
-            if (err) {
-                console.error('Error al verificar clase:', err);
-                return res.status(500).json({ message: "Error al verificar la clase" });
-            }
-
-            if (classRows.length === 0) {
-                return res.status(403).json({ message: "Esta clase no te pertenece" });
-            }
-
-            // Asignar estudiante a clase
-            db.query(
-                "INSERT INTO class_students (class_id, student_id) VALUES (?, ?)",
-                [class_id, student_id],
-                (err2) => {
-                    if (err2) {
-                        if (err2.code === 'ER_DUP_ENTRY') {
-                            return res.status(400).json({ message: "El estudiante ya está asignado a esta clase" });
-                        }
-                        console.error('Error al asignar estudiante:', err2);
-                        return res.status(500).json({ message: "Error al asignar estudiante" });
-                    }
-
-                    res.status(200).json({ message: "Estudiante asignado exitosamente" });
-                }
-            );
-        }
-    );
-});
+// Nota: Se eliminó una ruta duplicada de "/assign-student" que insertaba en class_students.
+// Ahora se utiliza la ruta unificada más arriba que valida roles y usa students_classes.
 
 // Endpoint: registrar consentimiento de términos/políticas
 router.post("/consent", (req, res) => {
@@ -1066,12 +1001,12 @@ router.get('/classes/:id/students', async (req, res) => {
             if (sec.school_id !== cls.school_id) return res.status(403).json({ message: 'No puedes ver estudiantes de esta clase' });
         }
 
-        // Obtener estudiantes unidos por students_classes
+        // Obtener estudiantes unidos por class_students (tabla oficial)
         const students = await new Promise((resolve, reject) => db.query(
-            `SELECT s.id, s.name, s.email, s.coins, sc.created_at
+            `SELECT s.id, s.name, s.email, s.coins, cs.assigned_at as created_at
              FROM students s
-             JOIN students_classes sc ON s.id = sc.student_id
-             WHERE sc.class_id = ?`,
+             JOIN class_students cs ON s.id = cs.student_id
+             WHERE cs.class_id = ?`,
             [classId], (err, results) => err ? reject(err) : resolve(results)));
 
         res.json(students || []);

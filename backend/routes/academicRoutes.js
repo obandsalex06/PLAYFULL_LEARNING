@@ -1,6 +1,6 @@
 /* eslint-env node */
 import express from 'express';
-import pool from '../config/db.js';
+import db from '../config/db.js';
 
 // Evitar usar 'process' directo para que el linter no marque no-undef
 const isProduction = !!(globalThis && globalThis.process && globalThis.process.env && globalThis.process.env.NODE_ENV === 'production');
@@ -40,7 +40,7 @@ router.post('/records', (req, res) => {
   }
 
   // Verificar que el docente pertenece a la clase
-  pool.query(
+  db.query(
     'SELECT id FROM teachers WHERE email = ? AND id IN (SELECT teacher_id FROM classes WHERE id = ?)',
     [teacher_email, class_id],
     (err, results) => {
@@ -61,7 +61,7 @@ router.post('/records', (req, res) => {
       }
 
       // Insertar el registro académico (usar 'observation' no 'observations')
-      pool.query(
+      db.query(
         'INSERT INTO academic_records (student_id, class_id, teacher_email, grade, evaluation_type, observation, evaluation_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [student_id, class_id, teacher_email, numericGrade, evaluation_type || 'examen', observations || '', evaluation_date || new Date().toISOString().split('T')[0]],
         (err) => {
@@ -92,7 +92,7 @@ router.get('/records/student/:studentId', async (req, res) => {
   try {
     if (role === 'estudiante') {
       // Estudiantes solo pueden ver sus propias notas
-      pool.query('SELECT id FROM students WHERE email = ?', [userEmail], (err, students) => {
+      db.query('SELECT id FROM students WHERE email = ?', [userEmail], (err, students) => {
         if (err) {
           console.error('Error al verificar estudiante:', err);
           return res.status(500).json({ message: 'Error al verificar permisos' });
@@ -111,7 +111,7 @@ router.get('/records/student/:studentId', async (req, res) => {
     }
 
     function getRecords() {
-      pool.query(
+      db.query(
         `SELECT ar.*, c.name as class_name, t.name as teacher_name 
          FROM academic_records ar 
          JOIN classes c ON ar.class_id = c.id 
@@ -146,7 +146,7 @@ router.get('/records/class/:classId', async (req, res) => {
 
   try {
     // Verificar que el docente pertenece a la clase
-    pool.query(
+    db.query(
       'SELECT id FROM teachers WHERE email = ? AND id IN (SELECT teacher_id FROM classes WHERE id = ?)',
       [teacher_email, classId],
       (err, teachers) => {
@@ -159,7 +159,7 @@ router.get('/records/class/:classId', async (req, res) => {
           return res.status(403).json({ message: 'No tienes permiso para ver notas de esta clase' });
         }
 
-        pool.query(
+        db.query(
           `SELECT ar.*, s.name as student_name, s.email as student_email
            FROM academic_records ar 
            JOIN students s ON ar.student_id = s.id

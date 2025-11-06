@@ -41,7 +41,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route
             element={
               <MainLayout>
-                <PublicNavbar />
               </MainLayout>
             }
           >

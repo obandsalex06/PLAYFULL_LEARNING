@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthLayout from "./AuthLayout";
+import AuthLayout from "../layouts/AuthLayout";
 
 export default function RegisterTeacher() {
   const [formData, setFormData] = useState({

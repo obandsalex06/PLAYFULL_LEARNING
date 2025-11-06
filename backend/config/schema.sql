@@ -152,6 +152,17 @@ CREATE TABLE IF NOT EXISTS class_students (
   UNIQUE KEY unique_class_student (class_id, student_id)
 );
 
+-- Tabla legacy students_classes (opcional): crear para compatibilidad y facilitar migración
+CREATE TABLE IF NOT EXISTS students_classes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  class_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+  FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+  UNIQUE KEY uniq_student_class (student_id, class_id)
+);
+
 -- Tabla para registro de consentimientos (términos y políticas)
 CREATE TABLE IF NOT EXISTS consents (
   id INT AUTO_INCREMENT PRIMARY KEY,

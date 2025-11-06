@@ -3,7 +3,7 @@ import InputField from "../components/InputField";
 import AlertMessage from "../components/AlertMessage";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import AuthLayout from "./AuthLayout";
+import AuthLayout from "../layouts/AuthLayout";
 import Modal from "../components/Modal";
 
 export default function Login() {

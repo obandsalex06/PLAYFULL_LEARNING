@@ -156,24 +156,26 @@ async function q(sql, params = []) {
       }
     }
 
-    // Crear tabla students_classes si no existe
-    const ddl = `CREATE TABLE IF NOT EXISTS students_classes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      student_id INT NOT NULL,
-      class_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-      FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
-    )`;
-    await q(ddl);
-
-    // Asignar estudiantes a clases (uno a uno)
+    // Unificar: usar solo class_students (ya definida en schema.sql). Migrar si existe students_classes.
+    const legacyExists = await q("SHOW TABLES LIKE 'students_classes'");
+    if (legacyExists.length) {
+      console.log('Migrating data from students_classes to class_students (if any)');
+      const legacyRows = await q('SELECT student_id, class_id FROM students_classes');
+      for (const row of legacyRows) {
+        try {
+          await q('INSERT IGNORE INTO class_students (class_id, student_id) VALUES (?, ?)', [row.class_id, row.student_id]);
+        } catch (e) {
+          console.warn('Insert IGNORE failed for', row, e.message);
+        }
+      }
+    }
+    // Asignar estudiantes a clases (uno a uno) directamente en class_students
     for (let i = 0; i < studentIds.length; i++) {
       const sidStudent = studentIds[i];
       const cidClass = classIds[i % classIds.length];
-      const exists = await q('SELECT id FROM students_classes WHERE student_id = ? AND class_id = ?', [sidStudent, cidClass]);
+      const exists = await q('SELECT id FROM class_students WHERE student_id = ? AND class_id = ?', [sidStudent, cidClass]);
       if (exists.length === 0) {
-        await q('INSERT INTO students_classes (student_id, class_id) VALUES (?, ?)', [sidStudent, cidClass]);
+        await q('INSERT INTO class_students (class_id, student_id) VALUES (?, ?)', [cidClass, sidStudent]);
         console.log('Assigned student', sidStudent, 'to class', cidClass);
       } else {
         console.log('Assignment exists student', sidStudent, 'class', cidClass);
