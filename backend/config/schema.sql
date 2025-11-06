@@ -46,6 +46,11 @@ CREATE TABLE IF NOT EXISTS students (
   password VARCHAR(255) NOT NULL,
   school_id INT,
   coins INT DEFAULT 0,
+  -- Nuevas columnas para compatibilidad con frontend
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  role VARCHAR(50),
+  grade INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (school_id) REFERENCES schools(id)
@@ -158,5 +163,17 @@ CREATE TABLE IF NOT EXISTS consents (
   accepted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_user_email (user_email),
   INDEX idx_accepted_at (accepted_at)
+);
+
+-- Tabla de comunicados (announcements) requerida por announcementRoutes.js
+CREATE TABLE IF NOT EXISTS announcements (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  priority ENUM('normal','high','urgent') DEFAULT 'normal',
+  created_by INT, -- secretaria que creó el comunicado (puede ser NULL si admin)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (created_by) REFERENCES secretaries(id)
 );
 

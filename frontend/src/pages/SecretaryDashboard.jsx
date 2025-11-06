@@ -560,7 +560,7 @@ export default function SecretaryDashboard() {
                               </span>
                             </div>
                             <p className="text-gray-700">{announcement.message}</p>
-                            <p className="text-sm text-gray-500 mt-2">📅 {new Date(announcement.date).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-500 mt-2">📅 {new Date(announcement.created_at || announcement.date).toLocaleDateString()}</p>
                           </div>
                           <button
                             onClick={() => handleDeleteAnnouncement(announcement.id)}

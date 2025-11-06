@@ -6,14 +6,15 @@ import { generateTokens, verifyRefreshToken } from "../utils/jwtUtils.js";
 import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-// Rate limiter para login (máximo 20 intentos cada 15 minutos en desarrollo, 5 en producción)
+// Rate limiter para login.
+// Más permisivo en desarrollo para evitar bloquear pruebas (100 cada 5 min).
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: isDevelopment ? 20 : 5, // 20 intentos en desarrollo, 5 en producción
-    message: "Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.",
-    standardHeaders: true, // Retorna info en headers `RateLimit-*`
-    legacyHeaders: false, // Deshabilita headers `X-RateLimit-*`
+    windowMs: 5 * 60 * 1000, // 5 minutos
+    max: isDevelopment ? 100 : 10, // desarrollo vs producción
+    message: { message: "Demasiados intentos de inicio de sesión. Espera unos minutos." },
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
 // Endpoint: obtener todos los docentes (para admin y secretaria)
@@ -59,41 +60,68 @@ router.post("/create-class", async(req, res) => {
 });
 
 // Endpoint: obtener clases y estudiantes del docente
-router.get("/teacher-classes", async(req, res) => {
-    if (req.headers["x-user-role"] !== "docente") {
-        return res.status(403).json({ message: "Solo los profesores pueden ver sus clases." });
-    }
-    const teacherEmail = req.headers["x-user-email"];
-    // Obtener id del docente
-    db.query("SELECT id FROM teachers WHERE email = ?", [teacherEmail], (err, teacherRows) => {
-        if (err) return res.status(500).json({ message: "Error en la base de datos", error: err });
-        if (teacherRows.length === 0) return res.status(404).json({ message: "Docente no encontrado" });
-        const teacherId = teacherRows[0].id;
+router.get("/teacher-classes", async (req, res) => {
+    try {
+        // Permitir autenticación vía JWT o headers de compatibilidad
+        const roleHeader = req.headers["x-user-role"]; 
+        const emailHeader = req.headers["x-user-email"]; 
+        const role = (req.user && req.user.role) || roleHeader;
+        const teacherEmail = (req.user && req.user.email) || emailHeader;
+
+        if (role !== "docente") {
+            return res.status(403).json({ message: "Solo los profesores pueden ver sus clases." });
+        }
+        if (!teacherEmail) return res.status(400).json({ message: "Falta x-user-email" });
+
+        // Obtener id del docente
+        const [teacher] = await new Promise((resolve, reject) => {
+            db.query("SELECT id FROM teachers WHERE email = ?", [teacherEmail], (err, rows) => err ? reject(err) : resolve(rows));
+        });
+        if (!teacher) return res.status(404).json({ message: "Docente no encontrado" });
+
         // Obtener clases del docente
-        db.query("SELECT id, name FROM classes WHERE teacher_id = ?", [teacherId], (err2, classRows) => {
-            if (err2) return res.status(500).json({ message: "Error al obtener clases", error: err2 });
-            if (classRows.length === 0) return res.json([]);
-            // Para cada clase, obtener estudiantes
-            const classIds = classRows.map(c => c.id);
-            const placeholders = classIds.map(() => '?').join(',');
+        const classRows = await new Promise((resolve, reject) => {
+            db.query("SELECT id, name FROM classes WHERE teacher_id = ?", [teacher.id], (err, rows) => err ? reject(err) : resolve(rows));
+        });
+        if (!classRows || classRows.length === 0) return res.json([]);
+
+        const classIds = classRows.map(c => c.id);
+        const placeholders = classIds.map(() => '?').join(',');
+
+        // Intentar con students_classes; si falla, usar class_students (compatibilidad)
+        const runStudentsQuery = (tableName) => new Promise((resolve, reject) => {
             db.query(
                 `SELECT s.id, s.name, s.email, cs.class_id FROM students s
-                 JOIN class_students cs ON s.id = cs.student_id
+                 JOIN ${tableName} cs ON s.id = cs.student_id
                  WHERE cs.class_id IN (${placeholders})`,
                 classIds,
-                (err3, studentRows) => {
-                    if (err3) return res.status(500).json({ message: "Error al obtener estudiantes", error: err3 });
-                    // Agrupar estudiantes por clase
-                    const result = classRows.map(cls => ({
-                        id: cls.id,
-                        name: cls.name,
-                        students: studentRows.filter(s => s.class_id === cls.id)
-                    }));
-                    res.json(result);
-                }
+                (err, rows) => err ? reject(err) : resolve(rows)
             );
         });
-    });
+
+        let studentRows = [];
+        try {
+            studentRows = await runStudentsQuery('students_classes');
+        } catch {
+            try {
+                studentRows = await runStudentsQuery('class_students');
+            } catch {
+                // Si ambas fallan, devolver clases sin estudiantes
+                studentRows = [];
+            }
+        }
+
+        const result = classRows.map(cls => ({
+            id: cls.id,
+            name: cls.name,
+            students: studentRows.filter(s => s.class_id === cls.id)
+        }));
+
+        res.json(result);
+    } catch (error) {
+        console.error('GET /teacher-classes error', error);
+        res.status(500).json({ message: 'Error al obtener clases del docente', error: error.message });
+    }
 });
 
 

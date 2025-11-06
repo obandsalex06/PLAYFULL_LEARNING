@@ -25,11 +25,11 @@ export default function Login() {
     } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
       newErrors.email = "Correo electrónico inválido.";
     }
-  // Contraseña: mínimo 8 caracteres, mayúscula, minúscula y número
+  // Contraseña: mínimo 8 caracteres, mayúscula, minúscula, número y caracter especial
     if (!formData.password) {
       newErrors.password = "La contraseña es obligatoria.";
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
-      newErrors.password = "Mínimo 8 caracteres, mayúscula, minúscula y número.";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
+      newErrors.password = "Mínimo 8 caracteres, mayúscula, minúscula, número y caracter especial.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -120,6 +120,9 @@ export default function Login() {
             autoComplete="current-password"
             style={{ paddingRight: "2.5rem", paddingTop: "0.75rem", paddingBottom: "0.75rem" }}
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Requisitos: 8+ caracteres, al menos 1 mayúscula, 1 minúscula, 1 número y 1 caracter especial.
+          </p>
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
@@ -149,6 +152,7 @@ export default function Login() {
           )}
         </button>
       </form>
+      {/* Bloque de cuentas demo removido por solicitud: no mostrar perfiles en login */}
       {mensaje && (
         <AlertMessage type={mensaje.startsWith('success:') ? 'success' : 'error'}>
           {mensaje.replace('success:', '').replace('error:', '')}
