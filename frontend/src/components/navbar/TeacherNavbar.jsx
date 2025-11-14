@@ -5,7 +5,7 @@ export default function TeacherNavbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   return (
-    <nav className="bg-green-600 text-white p-4 flex justify-between">
+    <nav className="bg-blue-600 text-white p-4 flex justify-between">
       <h1 className="font-bold">Profesor</h1>
       <div className="flex gap-6 items-center">
         {user && (

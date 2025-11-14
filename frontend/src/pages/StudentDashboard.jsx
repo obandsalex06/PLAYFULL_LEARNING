@@ -2,9 +2,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "../components/LoadingSpinner";
+import EmptyState from "../components/EmptyState";
+import { SkeletonTable, SkeletonCard } from "../components/SkeletonLoader";
 
 export default function StudentDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [rewards, setRewards] = useState([]);
   const [mensaje, setMensaje] = useState("");
@@ -25,7 +28,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || !user.id) return;
     
-  fetch(`/api/academic/records/student/${user.id}`, {
+    fetch(`/api/academic/records/student/${user.id}`, {
       headers: {
         "Content-Type": "application/json",
         "x-user-role": "estudiante",
@@ -46,7 +49,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || !user.id) return;
     
-  fetch(`/api/feedback/student/${user.id}`, {
+    fetch(`/api/feedback/student/${user.id}`, {
       headers: {
         "Content-Type": "application/json",
         "x-user-role": "estudiante",
@@ -67,7 +70,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || !user.id) return;
     
-  fetch(`/api/student/classes/${user.id}`, {
+    fetch(`/api/student/classes/${user.id}`, {
       headers: {
         "Content-Type": "application/json",
         "x-user-role": "estudiante",
@@ -88,7 +91,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user || !user.id) return;
     
-  fetch(`/api/student/evidences/${user.id}`, {
+    fetch(`/api/student/evidences/${user.id}`, {
       headers: {
         "Content-Type": "application/json",
         "x-user-role": "estudiante",
@@ -112,7 +115,7 @@ export default function StudentDashboard() {
       return;
     }
 
-  fetch("/api/auth/rewards", {
+    fetch("/api/auth/rewards", {
       headers: {
         "Content-Type": "application/json",
         "x-user-role": "estudiante",
@@ -202,10 +205,6 @@ export default function StudentDashboard() {
                 <div className="text-sm font-medium">Learncoins</div>
                 <div className="text-2xl font-bold">{user.coins ?? 0}</div>
               </div>
-              <button
-                onClick={() => { logout(); navigate('/login'); }}
-                className="bg-white text-indigo-700 font-semibold px-4 py-2 rounded-xl shadow hover:opacity-90"
-              >Cerrar sesión</button>
             </div>
           </div>
         </div>
@@ -274,27 +273,29 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Registros Académicos
         </h2>
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nota</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profesor</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {academicRecords.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} columns={5} />
+        ) : academicRecords.length === 0 ? (
+          <EmptyState
+            icon="📚"
+            title="No hay registros académicos"
+            description="Tus calificaciones y evaluaciones aparecerán aquí una vez que tus profesores las registren."
+          />
+        ) : (
+          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No hay registros académicos disponibles
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nota</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profesor</th>
                   </tr>
-                ) : (
-                  academicRecords.map((record, index) => (
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {academicRecords.map((record, index) => (
                     <tr key={record.id || index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {record.class_name}
@@ -316,12 +317,12 @@ export default function StudentDashboard() {
                         {record.teacher_name}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Retroalimentación de Profesores */}
@@ -329,10 +330,16 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           Retroalimentación de Profesores
         </h2>
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          {feedback.length === 0 ? (
-            <p className="p-6 text-gray-500 text-center">No hay retroalimentación disponible</p>
-          ) : (
+        {loading ? (
+          <SkeletonCard count={2} />
+        ) : feedback.length === 0 ? (
+          <EmptyState
+            icon="💬"
+            title="Sin retroalimentación"
+            description="Aún no has recibido comentarios de tus profesores. Los verás aquí cuando tus maestros compartan sus observaciones."
+          />
+        ) : (
+          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
             <div className="divide-y divide-gray-200">
               {feedback.map((f, index) => (
                 <div key={f.id || index} className="p-6 hover:bg-gray-50 transition-colors">
@@ -349,8 +356,8 @@ export default function StudentDashboard() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Mis Clases */}
@@ -358,10 +365,18 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           📚 Mis Clases
         </h2>
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          {classes.length === 0 ? (
-            <p className="p-6 text-gray-500 text-center">No tienes clases asignadas</p>
-          ) : (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SkeletonCard count={3} />
+          </div>
+        ) : classes.length === 0 ? (
+          <EmptyState
+            icon="📚"
+            title="No tienes clases asignadas"
+            description="Tu secretaria aún no te ha inscrito en ninguna clase. Consulta con la administración de tu colegio."
+          />
+        ) : (
+          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
               {classes.map((classItem, index) => (
                 <div key={classItem.id || index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -383,8 +398,8 @@ export default function StudentDashboard() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* Mis Evidencias */}
@@ -392,27 +407,29 @@ export default function StudentDashboard() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           📝 Mis Evidencias
         </h2>
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {evidences.length === 0 ? (
+        {loading ? (
+          <SkeletonTable rows={3} columns={5} />
+        ) : evidences.length === 0 ? (
+          <EmptyState
+            icon="📝"
+            title="No hay evidencias"
+            description="Aún no has subido evidencias de tus trabajos. Podrás compartir tus tareas y proyectos aquí."
+          />
+        ) : (
+          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                      No has subido evidencias aún
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clase</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Archivo</th>
                   </tr>
-                ) : (
-                  evidences.map((evidence, index) => (
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {evidences.map((evidence, index) => (
                     <tr key={evidence.id || index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {evidence.class_name}
@@ -449,12 +466,12 @@ export default function StudentDashboard() {
                         )}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Premios Disponibles */}

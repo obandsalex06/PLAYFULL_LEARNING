@@ -21,12 +21,14 @@ export default function AuthLayout({
           <img src={logo} alt="Playful Learning Logo" className="w-24 h-24 object-contain mb-4" />
           <h2 className="text-3xl font-bold">{tituloIzq}</h2>
           <p className="mt-3">{subtituloIzq}</p>
-          <Link
-            to={linkIzq}
-            className="mt-6 px-6 py-3 bg-white text-blue-700 font-bold rounded-xl shadow hover:bg-gray-100 transition"
-          >
-            {textoLinkIzq}
-          </Link>
+          {linkIzq && textoLinkIzq && (
+            <Link
+              to={linkIzq}
+              className="mt-6 px-6 py-3 bg-white text-blue-700 font-bold rounded-xl shadow hover:bg-gray-100 transition"
+            >
+              {textoLinkIzq}
+            </Link>
+          )}
         </div>
 
         {/* DERECHA */}

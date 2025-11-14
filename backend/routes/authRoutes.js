@@ -4,6 +4,13 @@ import rateLimit from "express-rate-limit";
 import db from "../config/db.js";
 import { generateTokens, verifyRefreshToken } from "../utils/jwtUtils.js";
 import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware.js";
+import { 
+  sanitizeBody, 
+  validateStudentRegistration, 
+  validateStaffRegistration,
+  validateNumericId,
+  sanitizeString 
+} from "../middleware/validationMiddleware.js";
 const router = express.Router();
 
 // Rate limiter para login.
@@ -435,7 +442,7 @@ router.post("/register-admin", (req, res) => {
 });
 
 // 📌 Ruta de registro de profesores
-router.post("/register-teacher", async(req, res) => {
+router.post("/register-teacher", validateStaffRegistration, async(req, res) => {
     const isAdmin = req.headers["x-user-role"] === "admin";
     if (!isAdmin) {
         return res.status(403).json({ message: "Solo el administrador puede registrar profesores." });
@@ -486,7 +493,7 @@ router.post("/register-teacher", async(req, res) => {
     }
 });
     // 📌 Ruta de registro de secretarias (solo admin)
-    router.post("/register-secretary", async (req, res) => {
+    router.post("/register-secretary", validateStaffRegistration, async (req, res) => {
         const isAdmin = req.headers["x-user-role"] === "admin";
         if (!isAdmin) return res.status(403).json({ message: "Solo el administrador puede registrar secretarias." });
         try {
@@ -539,7 +546,7 @@ router.post("/register-teacher", async(req, res) => {
 
 
 // 📌 Ruta de registro
-router.post("/register", async (req, res) => {
+router.post("/register", validateStudentRegistration, async (req, res) => {
     try {
         // Solo la secretaria (o admin si se desea) puede registrar estudiantes
         const roleHeader = req.headers["x-user-role"];

@@ -77,7 +77,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           {/* Profesor */}
           <Route
             element={
-              <MainLayout />
+              <MainLayout>
+                <TeacherNavbar />
+              </MainLayout>
             }
           >
             <Route

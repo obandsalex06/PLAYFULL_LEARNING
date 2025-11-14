@@ -98,9 +98,10 @@ export default function AdminPanel() {
       const res = await API.get("/auth/teachers", {
         headers: { "x-user-role": "admin" }
       });
-      setTeachers(res.data);
+      setTeachers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando profesores:", err);
+      setTeachers([]);
     }
   };
 
@@ -125,9 +126,10 @@ export default function AdminPanel() {
       const res = await API.get("/auth/all-classes", {
         headers: { "x-user-role": "admin" }
       });
-      setClasses(res.data);
+      setClasses(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando clases:", err);
+      setClasses([]);
     }
   };
 
@@ -136,9 +138,10 @@ export default function AdminPanel() {
       const res = await API.get("/auth/schools", {
         headers: { "x-user-role": "admin" }
       });
-      setSchools(res.data);
+      setSchools(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando colegios:", err);
+      setSchools([]);
     }
   };
 
@@ -147,9 +150,10 @@ export default function AdminPanel() {
       const res = await API.get("/auth/rewards", {
         headers: { "x-user-role": "admin" }
       });
-      setRewards(res.data);
+      setRewards(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando premios:", err);
+      setRewards([]);
     }
   };
 

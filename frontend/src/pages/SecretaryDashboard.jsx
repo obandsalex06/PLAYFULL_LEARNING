@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import API from "../api";
 import Pagination from "../components/Pagination";
@@ -9,7 +9,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import Breadcrumbs from "../components/Breadcrumbs";
 
 export default function SecretaryDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   // Estados principales
@@ -78,12 +78,13 @@ export default function SecretaryDashboard() {
       if (gradeFilter) params.grade = gradeFilter;
       
       const res = await API.get("/auth/all-students", { params });
-      setAllStudents(res.data);
+      const dataArray = Array.isArray(res.data) ? res.data : [];
+      setAllStudents(dataArray);
       
       // Aplicar paginación del lado del cliente
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
-      setStudents(res.data.slice(startIndex, endIndex));
+      setStudents(dataArray.slice(startIndex, endIndex));
     } catch (err) {
       console.error("Error cargando estudiantes:", err);
       setStudents([]);
@@ -99,7 +100,7 @@ export default function SecretaryDashboard() {
       const res = await API.get("/auth/teachers", {
         headers: { "x-user-role": "secretaria" }
       });
-      setTeachers(res.data);
+      setTeachers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando profesores:", err);
       setTeachers([]);
@@ -114,7 +115,7 @@ export default function SecretaryDashboard() {
       const res = await API.get("/announcements/announcements", {
         headers: { "x-user-role": "secretaria" }
       });
-      setAnnouncements(res.data);
+      setAnnouncements(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando comunicados:", err);
       setAnnouncements([]);
@@ -227,13 +228,6 @@ export default function SecretaryDashboard() {
               <h1 className="text-3xl font-bold">Panel de Secretaría</h1>
               <p className="text-blue-100 mt-1">Bienvenida, {user.name}</p>
             </div>
-            <button
-              onClick={() => { logout(); navigate("/login"); }}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition"
-            >
-              <LogOut size={20} />
-              <span>Cerrar sesión</span>
-            </button>
           </div>
         </div>
 
@@ -244,9 +238,7 @@ export default function SecretaryDashboard() {
               { id: "dashboard", label: "📊 Resumen" },
               { id: "students", label: "👥 Estudiantes" },
               { id: "teachers", label: "👨‍🏫 Profesores" },
-              { id: "announcements", label: "📢 Comunicados" },
-              { id: "enrollments", label: "📝 Inscripciones" },
-              { id: "reports", label: "📈 Reportes" }
+              { id: "announcements", label: "📢 Comunicados" }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -581,64 +573,7 @@ export default function SecretaryDashboard() {
           </div>
         )}
 
-        {/* Tab: Inscripciones */}
-        {activeTab === "enrollments" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Gestión de Inscripciones</h2>
-            
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">📝</div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Módulo en Desarrollo</h3>
-                <p className="text-gray-600">
-                  Aquí podrás gestionar las inscripciones de nuevos estudiantes,
-                  generar reportes de matriculación y administrar el proceso de admisión.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Tab: Reportes */}
-        {activeTab === "reports" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">Reportes y Estadísticas</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Reporte de Estudiantes</h3>
-                <p className="text-gray-600 mb-4">Total de estudiantes registrados: <strong>{stats.students}</strong></p>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                  Generar Reporte PDF
-                </button>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">👨‍🏫 Reporte de Profesores</h3>
-                <p className="text-gray-600 mb-4">Total de profesores activos: <strong>{stats.teachers}</strong></p>
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                  Generar Reporte PDF
-                </button>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">📚 Reporte de Clases</h3>
-                <p className="text-gray-600 mb-4">Total de clases activas: <strong>{stats.classes}</strong></p>
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
-                  Generar Reporte PDF
-                </button>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">📈 Estadísticas Generales</h3>
-                <p className="text-gray-600 mb-4">Resumen completo del sistema</p>
-                <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition">
-                  Generar Reporte PDF
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
       
       {/* Toast de notificaciones */}

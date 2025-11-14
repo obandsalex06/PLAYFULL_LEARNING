@@ -1,6 +1,7 @@
 /* eslint-env node */
 import express from 'express';
 import db from '../config/db.js';
+import { validateGrade, validateNumericId, sanitizeString } from '../middleware/validationMiddleware.js';
 
 // Evitar usar 'process' directo para que el linter no marque no-undef
 const isProduction = !!(globalThis && globalThis.process && globalThis.process.env && globalThis.process.env.NODE_ENV === 'production');

@@ -1,5 +1,6 @@
 import express from "express";
 import db from "../config/db.js";
+import { sanitizeString } from "../middleware/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -26,11 +27,24 @@ router.get("/announcements", (req, res) => {
 
 // POST - Crear un nuevo comunicado
 router.post("/announcements", (req, res) => {
-  const { title, message, priority = "normal" } = req.body;
+  let { title, message, priority = "normal" } = req.body;
   const userEmail = req.headers["x-user-email"];
+  
+  // Sanitizar inputs para prevenir XSS
+  title = sanitizeString(title);
+  message = sanitizeString(message);
+  priority = sanitizeString(priority);
   
   if (!title || !message) {
     return res.status(400).json({ error: "Título y mensaje son requeridos" });
+  }
+
+  if (title.length < 3 || title.length > 200) {
+    return res.status(400).json({ error: "El título debe tener entre 3 y 200 caracteres" });
+  }
+
+  if (message.length < 10 || message.length > 1000) {
+    return res.status(400).json({ error: "El mensaje debe tener entre 10 y 1000 caracteres" });
   }
 
   // Primero obtener el ID de la secretaria por su email

@@ -6,6 +6,9 @@ import feedbackRoutes from "./routes/feedbackRoutes.js";
 import academicRoutes from "./routes/academicRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
+import evidenceRoutes from "./routes/evidenceRoutes.js";
+import rewardRoutes from "./routes/rewardRoutes.js";
+import passwordRecoveryRoutes from "./routes/passwordRecoveryRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -29,6 +32,9 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/academic", academicRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/evidences", evidenceRoutes);
+app.use("/api/rewards", rewardRoutes);
+app.use("/api/password-recovery", passwordRecoveryRoutes);
 
 // Ruta de prueba
 app.get("/", (req, res) => {

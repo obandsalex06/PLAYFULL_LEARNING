@@ -71,8 +71,9 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) {
         await axios.post('/api/auth/logout', {}, {
           headers: { Authorization: `Bearer ${accessToken}` }
-        }).catch(() => {
-          // Ignorar errores del logout en backend
+        }).catch((err) => {
+          // Ignorar errores del logout en backend (el token puede estar expirado)
+          console.log('Logout backend call failed (expected if token expired):', err.message);
         });
       }
     } finally {

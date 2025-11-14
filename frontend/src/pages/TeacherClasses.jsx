@@ -138,7 +138,9 @@ export default function TeacherClasses() {
         })
           .then(res2 => res2.json())
           .then(d2 => setStudents(Array.isArray(d2) ? d2 : []))
-          .catch(() => {});
+          .catch((err) => {
+            console.error('Error al actualizar lista de estudiantes:', err);
+          });
       } else {
         setMessage(data.message || 'Error al asignar estudiante');
       }

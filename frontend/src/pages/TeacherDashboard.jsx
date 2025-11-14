@@ -5,7 +5,7 @@ import API from "../api";
 import { getTeacherClasses } from "../api";
 
 export default function TeacherDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [msg, setMsg] = useState(null);
@@ -47,7 +47,7 @@ export default function TeacherDashboard() {
           "x-user-role": user.role,
           "x-user-email": user.email,
         });
-        setClasses(res.data);
+        setClasses(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
         console.error('[TeacherDashboard] Error al cargar clases:', error);
         setClasses([]);
@@ -67,7 +67,7 @@ export default function TeacherDashboard() {
             "x-user-email": user.email,
           }
         });
-        setAllStudents(res.data);
+        setAllStudents(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Error al cargar estudiantes:", err);
         setAllStudents([]);
@@ -82,7 +82,7 @@ export default function TeacherDashboard() {
     
     const classId = feedbackForm.class_id || coinsForm.class_id || academicForm.class_id;
     const clase = classes.find(c => String(c.id) === String(classId));
-    setStudents(clase ? clase.students : []);
+    setStudents(clase && Array.isArray(clase.students) ? clase.students : []);
   }, [feedbackForm.class_id, coinsForm.class_id, academicForm.class_id, classes]);
 
   // Handlers para asignar estudiante a clase
@@ -114,7 +114,7 @@ export default function TeacherDashboard() {
         "x-user-role": user.role,
         "x-user-email": user.email,
       });
-      setClasses(classRes.data);
+      setClasses(Array.isArray(classRes.data) ? classRes.data : []);
     } catch (err) {
       setMsg({ 
         type: 'error', 
@@ -244,11 +244,6 @@ export default function TeacherDashboard() {
     );
   }
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -259,12 +254,6 @@ export default function TeacherDashboard() {
               <h1 className="text-3xl font-bold text-white">Panel de Docente</h1>
               <p className="text-blue-100 mt-1">Bienvenido, {user.name}</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="bg-white text-blue-700 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition shadow-md"
-            >
-              Cerrar sesión
-            </button>
           </div>
 
           {/* Pestañas de navegación */}
