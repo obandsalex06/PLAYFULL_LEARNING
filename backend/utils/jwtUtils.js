@@ -1,8 +1,13 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Claves secretas (en producción deben estar en variables de entorno)
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'tu-super-secreto-access-token-2024';
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'tu-super-secreto-refresh-token-2024';
+// Claves secretas: deben definirse en variables de entorno sin valores hardcode.
+const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env;
+
+if (!ACCESS_TOKEN_SECRET || !REFRESH_TOKEN_SECRET) {
+  console.warn('[jwtUtils] Faltan ACCESS_TOKEN_SECRET o REFRESH_TOKEN_SECRET en el entorno. Usa valores seguros en producción.');
+}
 
 // Duración de los tokens
 const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutos
@@ -14,7 +19,7 @@ const REFRESH_TOKEN_EXPIRY = '7d'; // 7 días
  * @returns {string} Token JWT
  */
 export function generateAccessToken(payload) {
-  return jwt.sign(payload, ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+  return jwt.sign(payload, ACCESS_TOKEN_SECRET || 'insecure-access-dev', { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
 /**
@@ -25,7 +30,7 @@ export function generateAccessToken(payload) {
 export function generateRefreshToken(payload) {
   // Solo incluimos id y email en el refresh token
   const { id, email } = payload;
-  return jwt.sign({ id, email }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+  return jwt.sign({ id, email }, REFRESH_TOKEN_SECRET || 'insecure-refresh-dev', { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
 /**
@@ -35,7 +40,7 @@ export function generateRefreshToken(payload) {
  */
 export function verifyAccessToken(token) {
   try {
-    return jwt.verify(token, ACCESS_TOKEN_SECRET);
+    return jwt.verify(token, ACCESS_TOKEN_SECRET || 'insecure-access-dev');
   } catch {
     return null;
   }
@@ -48,7 +53,7 @@ export function verifyAccessToken(token) {
  */
 export function verifyRefreshToken(token) {
   try {
-    return jwt.verify(token, REFRESH_TOKEN_SECRET);
+    return jwt.verify(token, REFRESH_TOKEN_SECRET || 'insecure-refresh-dev');
   } catch {
     return null;
   }

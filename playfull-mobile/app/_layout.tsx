@@ -21,14 +21,26 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(tabs)';
+    const inProtectedGroup = segments[0] === '(tabs)';
 
-    if (!user && inAuthGroup) {
-      // Usuario no autenticado intentando acceder a tabs
+    if (!user && inProtectedGroup) {
       router.replace('/login');
-    } else if (user && !inAuthGroup) {
-      // Usuario autenticado en login, redirigir a tabs
-      router.replace('/(tabs)');
+      return;
+    }
+
+    if (user) {
+      // Mapping roles to entry routes inside tabs group
+      const roleEntry: Record<string, string> = {
+        admin: '/(tabs)/admin',
+        docente: '/(tabs)/teacher',
+        secretaria: '/(tabs)/secretary',
+        estudiante: '/(tabs)/student'
+      };
+      const target = roleEntry[user.role] || '/(tabs)';
+      // If currently outside protected group or at login, redirect to role entry
+      if (!inProtectedGroup || segments[0] === 'login') {
+        router.replace(target);
+      }
     }
   }, [user, segments, isLoading]);
 

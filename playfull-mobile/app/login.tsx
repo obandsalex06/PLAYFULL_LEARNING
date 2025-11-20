@@ -31,11 +31,10 @@ export default function LoginScreen() {
   const passwordRef = useRef<TextInput | null>(null);
 
   const router = useRouter();
-  const { login } = useAuth();
+  const { loginWithCredentials } = useAuth();
   const { height } = useWindowDimensions();
 
-  const API_BASE = process.env.EXPO_PUBLIC_API_BASE || 'http://localhost:3000';
-  const API_LOGIN = `${API_BASE}/api/auth/login`;
+  // Endpoint handled inside AuthContext.loginWithCredentials
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -52,26 +51,14 @@ export default function LoginScreen() {
   const handleLogin = useCallback(async () => {
     if (!validate()) return;
     setLoading(true);
-    try {
-      const response = await fetch(API_LOGIN, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        await login(data.user, { accessToken: data.accessToken, refreshToken: data.refreshToken });
-        router.replace('/(tabs)'); // Simplificado; reemplazar si se diferencian rutas por rol
-      } else {
-        Alert.alert('Error', data.error || 'Credenciales incorrectas');
-      }
-    } catch (e) {
-      Alert.alert('Error', 'No se pudo conectar con el servidor');
-      console.error('Login error:', e);
-    } finally {
-      setLoading(false);
+    const result = await loginWithCredentials(email, password);
+    setLoading(false);
+    if (result.ok) {
+      router.replace('/(tabs)'); // Ajustar navegación por rol si se requiere
+    } else {
+      Alert.alert('Error', result.message || 'Credenciales inválidas');
     }
-  }, [API_LOGIN, email, password, login, router]);
+  }, [email, password, loginWithCredentials, router]);
 
   return (
     <SafeAreaView className="flex-1">
@@ -190,7 +177,7 @@ export default function LoginScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-        </LinearGradient>
-      </SafeAreaView>
-      );
-    }
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}
